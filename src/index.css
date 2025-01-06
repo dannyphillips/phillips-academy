@@ -2,59 +2,72 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-}
-
 body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
-  @apply bg-white;
+  @apply bg-farmhouse-cream;
 }
 
 @layer components {
   .nav-container {
-    @apply flex gap-2 p-2 bg-gray-100 rounded-lg w-fit;
+    @apply flex bg-white rounded-lg p-1 shadow-sm border border-farmhouse-beige;
   }
 
   .nav-toggle {
-    @apply flex items-center gap-2 px-4 py-2 text-gray-600 rounded-lg transition-colors;
+    @apply px-4 py-2 rounded-lg flex items-center gap-2 text-farmhouse-brown hover:bg-farmhouse-beige/50 transition-all;
   }
 
   .nav-toggle-active {
-    @apply bg-white shadow-sm text-gray-900;
+    @apply bg-farmhouse-navy text-white hover:bg-farmhouse-navy/90;
   }
 
   .child-pill {
-    @apply flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium;
+    @apply px-4 py-2 rounded-lg flex items-center gap-3 border-2 transition-all;
   }
 
-  .child-pill-blue {
-    @apply bg-blue-50 text-blue-600;
+  .child-pill-active {
+    @apply bg-farmhouse-navy text-white border-farmhouse-navy;
   }
 
-  .child-pill-green {
-    @apply bg-green-50 text-green-600;
+  .child-pill-inactive {
+    @apply bg-white text-farmhouse-brown border-farmhouse-beige hover:border-farmhouse-sage;
   }
 
-  .child-pill-red {
-    @apply bg-red-50 text-red-600;
+  .task-card {
+    @apply bg-white rounded-lg border border-farmhouse-beige p-4 hover:shadow-md transition-all;
   }
 
-  .task-section {
-    @apply mt-8;
+  .task-button {
+    @apply w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all;
   }
 
-  .task-section-title {
-    @apply text-2xl font-bold mb-4;
+  .task-button-completed {
+    @apply bg-farmhouse-sage text-white border-farmhouse-sage;
   }
 
-  .star-empty {
-    @apply text-gray-300;
+  .task-button-incomplete {
+    @apply bg-white border-farmhouse-beige hover:border-farmhouse-sage;
   }
 
-  .star-filled {
-    @apply text-yellow-400;
+  .primary-button {
+    @apply px-4 py-2 bg-farmhouse-navy text-white rounded-lg hover:bg-farmhouse-navy/90 flex items-center gap-2 transition-all;
+  }
+
+  .secondary-button {
+    @apply px-4 py-2 bg-white text-farmhouse-brown border border-farmhouse-beige rounded-lg hover:bg-farmhouse-beige/50 flex items-center gap-2 transition-all;
+  }
+
+  .input-field {
+    @apply w-full rounded-lg border border-farmhouse-beige px-3 py-2 focus:outline-none focus:border-farmhouse-sage;
+  }
+
+  .day-button {
+    @apply w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all;
+  }
+
+  .day-button-active {
+    @apply bg-farmhouse-navy border-farmhouse-navy text-white;
+  }
+
+  .day-button-inactive {
+    @apply border-farmhouse-beige hover:border-farmhouse-sage text-farmhouse-brown;
   }
 }

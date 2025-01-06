@@ -1,19 +1,24 @@
 import { useState } from "react";
 import { User, Users, CalendarDays, ListTodo } from "lucide-react";
 import { Child } from "./types/types";
-import { ChildView } from "./components/ChildView";
-import { ParentOverview } from "./components/ParentOverview";
-import { TaskManager } from "./components/TaskManager";
+import { ChildDayView } from "./components/ChildDayView";
+import { ChildWeekView } from "./components/ChildWeekView";
+import { ParentView } from "./components/ParentView";
 import { initialChildren } from "./data/initialData.tsx";
 
 export function App() {
-  const [isParentView, setIsParentView] = useState(false);
+  // Primary navigation toggles
+  const [mode, setMode] = useState<'kid' | 'parent'>('kid');
+  const [view, setView] = useState<'day' | 'week'>('day');
+  
+  // Child state
   const [activeChild, setActiveChild] = useState(0);
   const [selectedDay, setSelectedDay] = useState(new Date().getDay());
-  const [isTaskManager, setIsTaskManager] = useState(false);
+  const [children, setChildren] = useState<Child[]>(initialChildren);
+
+  // Constants
   const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const currentDay = new Date().getDay();
-  const [children, setChildren] = useState<Child[]>(initialChildren);
 
   const handleTaskComplete = (childId: number, taskId: number) => {
     setChildren(
@@ -44,75 +49,83 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <div className="flex gap-2">
+    <div className="min-h-screen w-full bg-farmhouse-cream">
+      <div className="max-w-7xl mx-auto p-6">
+        <div className="flex flex-col gap-6">
+          <div className="flex justify-center">
+            <img 
+              src="/assets/logo.png" 
+              alt="Phillips Homeschool Academy" 
+              className="h-24 w-auto object-contain"
+            />
+          </div>
+          <div className="flex justify-center gap-2">
+            {/* Mode Toggle */}
             <div className="nav-container">
               <button
-                onClick={() => setIsParentView(false)}
-                className={`nav-toggle ${!isParentView ? 'nav-toggle-active' : ''}`}
+                onClick={() => setMode('kid')}
+                className={`nav-toggle ${mode === 'kid' ? 'nav-toggle-active' : ''}`}
               >
                 <User className="w-4 h-4" />
                 Kid Mode
               </button>
               <button
-                onClick={() => setIsParentView(true)}
-                className={`nav-toggle ${isParentView ? 'nav-toggle-active' : ''}`}
+                onClick={() => setMode('parent')}
+                className={`nav-toggle ${mode === 'parent' ? 'nav-toggle-active' : ''}`}
               >
                 <Users className="w-4 h-4" />
                 Parent Mode
               </button>
             </div>
-            {isParentView && (
-              <div className="nav-container">
-                <button
-                  onClick={() => setIsTaskManager(false)}
-                  className={`nav-toggle ${!isTaskManager ? 'nav-toggle-active' : ''}`}
-                >
-                  <CalendarDays className="w-4 h-4" />
-                  Week View
-                </button>
-                <button
-                  onClick={() => setIsTaskManager(true)}
-                  className={`nav-toggle ${isTaskManager ? 'nav-toggle-active' : ''}`}
-                >
-                  <ListTodo className="w-4 h-4" />
-                  Task Manager
-                </button>
-              </div>
-            )}
+
+            {/* View Toggle */}
+            <div className="nav-container">
+              <button
+                onClick={() => setView('day')}
+                className={`nav-toggle ${view === 'day' ? 'nav-toggle-active' : ''}`}
+              >
+                <ListTodo className="w-4 h-4" />
+                Day View
+              </button>
+              <button
+                onClick={() => setView('week')}
+                className={`nav-toggle ${view === 'week' ? 'nav-toggle-active' : ''}`}
+              >
+                <CalendarDays className="w-4 h-4" />
+                Week View
+              </button>
+            </div>
           </div>
-        </div>
-        {isParentView ? (
-          isTaskManager ? (
-            <TaskManager
+
+          {mode === 'kid' ? (
+            view === 'day' ? (
+              <ChildDayView
+                children={children}
+                activeChild={activeChild}
+                setActiveChild={setActiveChild}
+                selectedDay={selectedDay}
+                setSelectedDay={setSelectedDay}
+                daysOfWeek={daysOfWeek}
+                handleTaskComplete={handleTaskComplete}
+              />
+            ) : (
+              <ChildWeekView
+                children={children}
+                handleTaskComplete={handleTaskComplete}
+                daysOfWeek={daysOfWeek}
+                currentDay={currentDay}
+              />
+            )
+          ) : (
+            <ParentView
               children={children}
               setChildren={setChildren}
-              setIsTaskManager={setIsTaskManager}
               daysOfWeek={daysOfWeek}
               currentDay={currentDay}
+              view={view}
             />
-          ) : (
-            <ParentOverview
-              children={children}
-              setIsParentView={setIsParentView}
-              handleTaskComplete={handleTaskComplete}
-              daysOfWeek={daysOfWeek}
-              currentDay={currentDay}
-            />
-          )
-        ) : (
-          <ChildView
-            children={children}
-            activeChild={activeChild}
-            setActiveChild={setActiveChild}
-            selectedDay={selectedDay}
-            setSelectedDay={setSelectedDay}
-            daysOfWeek={daysOfWeek}
-            handleTaskComplete={handleTaskComplete}
-          />
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

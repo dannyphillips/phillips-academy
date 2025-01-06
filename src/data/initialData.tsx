@@ -16,8 +16,8 @@ export const initialChildren: Child[] = [
   {
     id: 1,
     name: "Noah",
-    color: "blue",
-    totalPoints: 85,
+    color: "sage",
+    totalPoints: 0,
     tasks: [
       {
         id: 1,
@@ -75,8 +75,8 @@ export const initialChildren: Child[] = [
   {
     id: 2,
     name: "Lucas",
-    color: "green",
-    totalPoints: 110,
+    color: "terracotta",
+    totalPoints: 0,
     tasks: [
       {
         id: 1,
@@ -132,8 +132,8 @@ export const initialChildren: Child[] = [
   {
     id: 3,
     name: "Jacob",
-    color: "red",
-    totalPoints: 95,
+    color: "dustyblue",
+    totalPoints: 0,
     tasks: [
       {
         id: 1,

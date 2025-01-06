@@ -3,21 +3,14 @@ import { User, Trophy, Check } from 'lucide-react';
 import { Child } from '../types/types';
 import { getAllUniqueTasks, getColorClasses } from '../utils/taskUtils';
 
-interface ParentOverviewProps {
+interface ChildWeekViewProps {
   children: Child[];
-  setIsParentView: (value: boolean) => void;
   handleTaskComplete: (childId: number, taskId: number) => void;
   daysOfWeek: string[];
   currentDay: number;
 }
 
-export function ParentOverview({ 
-  children, 
-  setIsParentView, 
-  handleTaskComplete, 
-  daysOfWeek, 
-  currentDay 
-}: ParentOverviewProps) {
+export function ChildWeekView({ children, handleTaskComplete, daysOfWeek, currentDay }: ChildWeekViewProps) {
   const [visibleChildren, setVisibleChildren] = useState<number[]>(
     children.map((child) => child.id)
   );
@@ -36,16 +29,7 @@ export function ParentOverview({
   return (
     <div className="space-y-8">
       <header className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-800">
-          Family Weekly Schedule
-        </h1>
-        <button
-          onClick={() => setIsParentView(false)}
-          className="px-4 py-2 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 flex items-center gap-2"
-        >
-          <User className="w-4 h-4" />
-          Child View
-        </button>
+        <h1 className="text-3xl font-bold text-farmhouse-navy">Family Weekly Schedule</h1>
       </header>
       <div className="flex gap-4 items-center flex-wrap">
         {children.map((child) => {
@@ -55,36 +39,30 @@ export function ParentOverview({
             <button
               key={child.id}
               onClick={() => toggleChildVisibility(child.id)}
-              className={`px-4 py-2 rounded-lg transition-all flex items-center gap-3
-                ${isVisible ? childColors.bg : "bg-gray-100"}
-                ${isVisible ? childColors.border : "border-gray-200"}
-                border-2`}
+              className={`px-4 py-2 rounded-lg transition-all flex items-center gap-3 border-2 ${
+                isVisible ? `${childColors.bg} border-transparent` : childColors.muted
+              }`}
             >
-              <span
-                className={`font-medium ${isVisible ? childColors.text : "text-gray-400"}`}
-              >
+              <span className={isVisible ? 'text-white' : ''}>
                 {child.name}
               </span>
-              <div
-                className={`flex items-center gap-1 ${isVisible ? "" : "opacity-50"}`}
-              >
-                <Trophy
-                  className={`w-4 h-4 ${isVisible ? "text-yellow-500" : "text-gray-400"}`}
-                />
+              <div className={`flex items-center gap-1 ${isVisible ? 'text-white/90' : ''}`}>
+                <Trophy className="w-4 h-4" />
                 <span className="font-medium">{child.totalPoints}</span>
               </div>
             </button>
           );
         })}
       </div>
+
       <div className="overflow-x-auto">
         <div className="min-w-[1000px]">
           <div className="grid grid-cols-8 gap-2 mb-4">
-            <div className="font-medium text-gray-500">Tasks</div>
+            <div className="font-medium text-farmhouse-brown">Tasks</div>
             {daysOfWeek.map((day, index) => (
               <div
                 key={day}
-                className={`font-medium text-center ${index === currentDay ? "text-blue-600" : "text-gray-500"}`}
+                className={`font-medium text-center ${index === currentDay ? "text-farmhouse-navy" : "text-farmhouse-brown"}`}
               >
                 {day}
               </div>
@@ -93,7 +71,7 @@ export function ParentOverview({
           <div className="space-y-6">
             {categories.map((category) => (
               <div key={category} className="space-y-2">
-                <h3 className="text-lg font-semibold text-gray-700 mb-3">
+                <h3 className="text-lg font-semibold text-farmhouse-navy mb-3">
                   {category === "routine" ? "Daily Routines" : "Learning Tasks"}
                 </h3>
                 {allTasks
@@ -101,13 +79,13 @@ export function ParentOverview({
                   .map((task) => (
                     <div
                       key={task.key}
-                      className="grid grid-cols-8 gap-2 bg-white rounded-lg p-3 items-center"
+                      className="grid grid-cols-8 gap-2 bg-white rounded-lg p-3 items-center border border-farmhouse-beige hover:shadow-md transition-all"
                     >
                       <div className="text-sm">
-                        <div className="font-medium text-gray-800">
+                        <div className="font-medium text-farmhouse-navy">
                           {task.subject}
                         </div>
-                        <div className="text-gray-500 text-xs">
+                        <div className="text-farmhouse-brown text-xs">
                           {task.title}
                         </div>
                       </div>
@@ -134,7 +112,7 @@ export function ParentOverview({
                                   handleTaskComplete(child.id, childTask.id);
                                 }}
                                 className={`w-6 h-6 rounded-full border-2 transition-all 
-                                  ${childTask.completed ? `${childColors.completed} border-transparent` : `${childColors.bg} ${childColors.border}`}
+                                  ${childTask.completed ? `${childColors.completed} border-transparent` : `${childColors.bg} border-transparent`}
                                   hover:shadow-md`}
                                 title={`${child.name} - ${childTask.completed ? "Completed" : "Incomplete"}`}
                               >
