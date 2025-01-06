@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  @apply bg-white;
+}
+
+@layer components {
+  .nav-container {
+    @apply flex gap-2 p-2 bg-gray-100 rounded-lg w-fit;
+  }
+
+  .nav-toggle {
+    @apply flex items-center gap-2 px-4 py-2 text-gray-600 rounded-lg transition-colors;
+  }
+
+  .nav-toggle-active {
+    @apply bg-white shadow-sm text-gray-900;
+  }
+
+  .child-pill {
+    @apply flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium;
+  }
+
+  .child-pill-blue {
+    @apply bg-blue-50 text-blue-600;
+  }
+
+  .child-pill-green {
+    @apply bg-green-50 text-green-600;
+  }
+
+  .child-pill-red {
+    @apply bg-red-50 text-red-600;
+  }
+
+  .task-section {
+    @apply mt-8;
+  }
+
+  .task-section-title {
+    @apply text-2xl font-bold mb-4;
+  }
+
+  .star-empty {
+    @apply text-gray-300;
+  }
+
+  .star-filled {
+    @apply text-yellow-400;
+  }
+}
