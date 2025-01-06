@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { User, Users, CalendarDays, ListTodo } from "lucide-react";
+import { Lock, LockOpen, CalendarDays, ListTodo } from "lucide-react";
 import { Child } from "./types/types";
 import { ChildDayView } from "./components/ChildDayView";
 import { ChildWeekView } from "./components/ChildWeekView";
@@ -52,33 +52,28 @@ export function App() {
     <div className="min-h-screen w-full bg-farmhouse-cream">
       <div className="max-w-7xl mx-auto p-6">
         <div className="flex flex-col gap-6">
-          <div className="flex justify-center">
+          <div className="flex justify-between items-center">
             <img 
               src="/assets/logo.png" 
               alt="Phillips Homeschool Academy" 
               className="h-24 w-auto object-contain"
             />
-          </div>
-          <div className="flex justify-center gap-2">
             {/* Mode Toggle */}
-            <div className="nav-container">
-              <button
-                onClick={() => setMode('kid')}
-                className={`nav-toggle ${mode === 'kid' ? 'nav-toggle-active' : ''}`}
-              >
-                <User className="w-4 h-4" />
-                Kid Mode
-              </button>
-              <button
-                onClick={() => setMode('parent')}
-                className={`nav-toggle ${mode === 'parent' ? 'nav-toggle-active' : ''}`}
-              >
-                <Users className="w-4 h-4" />
-                Parent Mode
-              </button>
-            </div>
+            <button
+              onClick={() => setMode(mode === 'kid' ? 'parent' : 'kid')}
+              className={`nav-toggle !px-3 ${mode === 'parent' ? 'nav-toggle-active' : ''}`}
+              title={mode === 'parent' ? "Parent Mode (Unlocked)" : "Kid Mode (Locked)"}
+            >
+              {mode === 'parent' ? (
+                <LockOpen className="w-5 h-5" />
+              ) : (
+                <Lock className="w-5 h-5" />
+              )}
+            </button>
+          </div>
 
-            {/* View Toggle */}
+          {/* View Toggle */}
+          <div className="flex justify-center">
             <div className="nav-container">
               <button
                 onClick={() => setView('day')}
@@ -125,7 +120,7 @@ export function App() {
               view={view}
             />
           )}
-        </div>
+          </div>
       </div>
     </div>
   );

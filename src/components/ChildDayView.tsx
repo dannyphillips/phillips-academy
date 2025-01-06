@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Trophy, Star, Check, Flame } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Trophy, Star, Check, Flame, User, Users, CalendarDays, ListTodo, Plus, Edit2, Trash2, BookOpen, Palette, Music, Code, Calculator, Brain, Dumbbell, Utensils, Sun, Moon } from 'lucide-react';
 import { Child } from '../types/types';
 import { getColorClasses } from '../utils/taskUtils';
 
@@ -81,13 +81,18 @@ export function ChildDayView({
                 >
                   {task.completed && <Check className="w-4 h-4" />}
                 </button>
-                <div className="flex-grow">
-                  <h3 className="font-medium text-farmhouse-navy">
-                    {task.subject}
-                  </h3>
-                  <p className="text-sm text-farmhouse-brown">
-                    {task.title}
-                  </p>
+                <div className="flex-grow flex items-center gap-3">
+                  <div className="text-farmhouse-brown">
+                    {task.icon}
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-farmhouse-navy">
+                      {task.subject}
+                    </h3>
+                    <p className="text-sm text-farmhouse-brown">
+                      {task.title}
+                    </p>
+                  </div>
                 </div>
                 <div className="flex items-center gap-2 text-farmhouse-brown">
                   <div className="flex items-center gap-1">

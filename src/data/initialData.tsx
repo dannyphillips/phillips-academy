@@ -8,8 +8,14 @@ import {
   Shirt,
   BookOpen,
   Palette,
-  ShowerHead,
+  Bath,
   Music,
+  Brain,
+  Dumbbell,
+  Utensils,
+  Sun,
+  Moon,
+  Code,
 } from 'lucide-react';
 
 export const initialChildren: Child[] = [
@@ -33,7 +39,7 @@ export const initialChildren: Child[] = [
       {
         id: 2,
         category: "routine",
-        subject: "Morning Routine",
+        subject: "Evening Routine",
         title: "Brush teeth",
         icon: <Smile className="w-6 h-6" />,
         completed: false,
@@ -92,7 +98,7 @@ export const initialChildren: Child[] = [
       {
         id: 2,
         category: "routine",
-        subject: "Morning Routine",
+        subject: "Evening Routine",
         title: "Brush teeth",
         icon: <Smile className="w-6 h-6" />,
         completed: false,
@@ -138,9 +144,9 @@ export const initialChildren: Child[] = [
       {
         id: 1,
         category: "routine",
-        subject: "Morning Routine",
-        title: "Take shower",
-        icon: <ShowerHead className="w-6 h-6" />,
+        subject: "Evening Routine",
+        title: "Take bath",
+        icon: <Bath className="w-6 h-6" />,
         completed: false,
         frequency: [0, 2, 4, 6],
         streak: 2,
@@ -149,7 +155,7 @@ export const initialChildren: Child[] = [
       {
         id: 2,
         category: "routine",
-        subject: "Morning Routine",
+        subject: "Evening Routine",
         title: "Brush teeth",
         icon: <Smile className="w-6 h-6" />,
         completed: false,

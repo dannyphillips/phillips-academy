@@ -1,5 +1,6 @@
-import { Plus } from 'lucide-react';
-import { Child, Task } from '../types/types';
+import { useState } from 'react';
+import { Plus, Edit2, Trash2, Trophy, Star, Check, Flame, User, Users, CalendarDays, ListTodo, BookOpen, Palette, Music, Code, Calculator, Brain, Dumbbell, Utensils, Sun, Moon } from 'lucide-react';
+import { Child, Task, UniqueTask } from '../types/types';
 import { getAllUniqueTasks, getColorClasses } from '../utils/taskUtils';
 
 interface ParentWeekViewProps {
@@ -11,8 +12,19 @@ interface ParentWeekViewProps {
 }
 
 export function ParentWeekView({ children, setChildren, daysOfWeek, currentDay, openTaskEditor }: ParentWeekViewProps) {
-  const allTasks = getAllUniqueTasks(children);
-  const categories = ["routine", "academic"];
+  const allTasks = getAllUniqueTasks(children) as UniqueTask[];
+  const categories = ["Morning Routine", "Evening Routine", "academic"];
+  const [visibleChildren, setVisibleChildren] = useState<number[]>(
+    children.map((child) => child.id)
+  );
+
+  const toggleChildVisibility = (childId: number) => {
+    setVisibleChildren((prev) =>
+      prev.includes(childId)
+        ? prev.filter((id) => id !== childId)
+        : [...prev, childId]
+    );
+  };
 
   return (
     <div className="space-y-8">
@@ -26,6 +38,30 @@ export function ParentWeekView({ children, setChildren, daysOfWeek, currentDay, 
           New Task
         </button>
       </header>
+
+      <div className="flex gap-4 items-center flex-wrap">
+        {children.map((child) => {
+          const childColors = getColorClasses(child.color);
+          const isVisible = visibleChildren.includes(child.id);
+          return (
+            <button
+              key={child.id}
+              onClick={() => toggleChildVisibility(child.id)}
+              className={`px-4 py-2 rounded-lg transition-all flex items-center gap-3 border-2 ${
+                isVisible ? `${childColors.bg} border-transparent` : childColors.muted
+              }`}
+            >
+              <span className={isVisible ? 'text-white' : ''}>
+                {child.name}
+              </span>
+              <div className={`flex items-center gap-1 ${isVisible ? 'text-white/90' : ''}`}>
+                <Trophy className="w-4 h-4" />
+                <span className="font-medium">{child.totalPoints}</span>
+              </div>
+            </button>
+          );
+        })}
+      </div>
 
       <div className="overflow-x-auto">
         <div className="min-w-[1000px]">
@@ -44,21 +80,27 @@ export function ParentWeekView({ children, setChildren, daysOfWeek, currentDay, 
             {categories.map((category) => (
               <div key={category} className="space-y-2">
                 <h3 className="text-lg font-semibold text-farmhouse-navy mb-3">
-                  {category === "routine" ? "Daily Routines" : "Learning Tasks"}
+                  {category === "academic" ? "Learning Tasks" : category}
                 </h3>
                 {allTasks
-                  .filter((task) => task.category === category)
+                  .filter((task) => 
+                    category === "academic" 
+                      ? task.category === "academic"
+                      : task.category === "routine" && task.subject === category
+                  )
                   .map((task) => (
                     <div
                       key={task.key}
                       className="grid grid-cols-8 gap-2 bg-white rounded-lg p-3 items-center border border-farmhouse-beige hover:shadow-md transition-all"
                     >
-                      <div className="text-sm">
-                        <div className="font-medium text-farmhouse-navy">
-                          {task.subject}
+                      <div className="text-sm flex items-center gap-3">
+                        <div className="text-farmhouse-brown">
+                          {task.icon}
                         </div>
-                        <div className="text-farmhouse-brown text-xs">
-                          {task.title}
+                        <div>
+                          <div className="font-medium text-farmhouse-navy">
+                            {task.title}
+                          </div>
                         </div>
                       </div>
                       {[...Array(7)].map((_, dayIndex) => (
@@ -67,6 +109,7 @@ export function ParentWeekView({ children, setChildren, daysOfWeek, currentDay, 
                           className="flex flex-wrap justify-center gap-1 p-1"
                         >
                           {children.map((child) => {
+                            if (!visibleChildren.includes(child.id)) return null;
                             const childTask = child.tasks.find(
                               (t) =>
                                 t.subject === task.subject &&
@@ -74,6 +117,7 @@ export function ParentWeekView({ children, setChildren, daysOfWeek, currentDay, 
                             );
                             const isAssigned =
                               childTask?.frequency.includes(dayIndex);
+                            const colors = getColorClasses(child.color);
                             return (
                               <button
                                 key={child.id}
@@ -105,12 +149,12 @@ export function ParentWeekView({ children, setChildren, daysOfWeek, currentDay, 
                                     }),
                                   );
                                 }}
-                                className={`w-6 h-6 rounded-full border-2 transition-all
-                                  ${isAssigned ? 'bg-farmhouse-sage border-farmhouse-sage text-white' : 'bg-white border-farmhouse-beige hover:border-farmhouse-sage'}
+                                className={`w-6 h-6 rounded-full transition-all flex items-center justify-center
+                                  ${isAssigned ? colors.bg : colors.muted}
                                   hover:shadow-md`}
                                 title={`${child.name} - ${isAssigned ? "Assigned" : "Not assigned"}`}
                               >
-                                <span className="text-xs font-medium">
+                                <span className={`text-xs font-medium ${isAssigned ? 'text-white' : ''}`}>
                                   {child.name[0]}
                                 </span>
                               </button>

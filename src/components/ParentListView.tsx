@@ -1,5 +1,5 @@
-import { Plus, Edit2, Trash2 } from 'lucide-react';
-import { Child, Task, TaskEditor } from '../types/types';
+import { Plus, Edit2, Trash2, Trophy, Star, Check, Flame, User, Users, CalendarDays, ListTodo, BookOpen, Palette, Music, Code, Calculator, Brain, Dumbbell, Utensils, Sun, Moon } from 'lucide-react';
+import { Child, Task, TaskEditor, UniqueTask } from '../types/types';
 import { getAllUniqueTasks, getColorClasses } from '../utils/taskUtils';
 
 interface ParentListViewProps {
@@ -9,13 +9,13 @@ interface ParentListViewProps {
 }
 
 export function ParentListView({ children, setChildren, openTaskEditor }: ParentListViewProps) {
-  const allTasks = getAllUniqueTasks(children);
-  const categories = ["routine", "academic"];
+  const allTasks = getAllUniqueTasks(children) as UniqueTask[];
+  const categories = ["Morning Routine", "Evening Routine", "academic"];
 
   return (
     <div className="space-y-6">
       <header className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-farmhouse-navy">Task Manager</h1>
+        <h1 className="text-3xl font-bold text-farmhouse-navy">Manage Agenda</h1>
         <button
           onClick={() => openTaskEditor()}
           className="primary-button"
@@ -28,11 +28,15 @@ export function ParentListView({ children, setChildren, openTaskEditor }: Parent
       {categories.map((category) => (
         <div key={category} className="space-y-4">
           <h2 className="text-xl font-semibold text-farmhouse-navy">
-            {category === "routine" ? "Daily Routines" : "Learning Tasks"}
+            {category === "academic" ? "Learning Tasks" : category}
           </h2>
           <div className="bg-white rounded-lg border border-farmhouse-beige divide-y divide-farmhouse-beige">
             {allTasks
-              .filter((task) => task.category === category)
+              .filter((task) => 
+                category === "academic" 
+                  ? task.category === "academic"
+                  : task.category === "routine" && task.subject === category
+              )
               .map((task) => {
                 const assignedChildren = children.filter((child) =>
                   child.tasks.some(
@@ -46,13 +50,15 @@ export function ParentListView({ children, setChildren, openTaskEditor }: Parent
                     key={task.key}
                     className="p-4 flex items-center gap-4 hover:bg-farmhouse-cream/50 transition-all"
                   >
-                    <div className="flex-grow">
-                      <h3 className="font-medium text-farmhouse-navy">
-                        {task.subject}
-                      </h3>
-                      <p className="text-sm text-farmhouse-brown">
-                        {task.title}
-                      </p>
+                    <div className="flex-grow flex items-center gap-3">
+                      <div className="text-farmhouse-brown">
+                        {task.icon}
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-farmhouse-navy">
+                          {task.title}
+                        </h3>
+                      </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="flex -space-x-2">
@@ -61,7 +67,7 @@ export function ParentListView({ children, setChildren, openTaskEditor }: Parent
                           return (
                             <div
                               key={child.id}
-                              className={`w-8 h-8 rounded-full bg-farmhouse-sage border-2 border-white flex items-center justify-center shadow-sm`}
+                              className={`w-8 h-8 rounded-full ${colors.bg} border-2 border-white flex items-center justify-center shadow-sm`}
                               title={child.name}
                             >
                               <span className="text-sm font-medium text-white">

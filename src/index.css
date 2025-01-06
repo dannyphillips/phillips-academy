@@ -8,11 +8,11 @@ body {
 
 @layer components {
   .nav-container {
-    @apply flex bg-white rounded-lg p-1 shadow-sm border border-farmhouse-beige;
+    @apply flex gap-2 bg-white rounded-lg p-1 border border-farmhouse-beige shadow-sm;
   }
 
   .nav-toggle {
-    @apply px-4 py-2 rounded-lg flex items-center gap-2 text-farmhouse-brown hover:bg-farmhouse-beige/50 transition-all;
+    @apply px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium text-farmhouse-brown transition-all hover:bg-farmhouse-beige/50;
   }
 
   .nav-toggle-active {
@@ -32,11 +32,11 @@ body {
   }
 
   .task-card {
-    @apply bg-white rounded-lg border border-farmhouse-beige p-4 hover:shadow-md transition-all;
+    @apply bg-white rounded-lg p-4 border border-farmhouse-beige hover:shadow-md transition-all;
   }
 
   .task-button {
-    @apply w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all;
+    @apply w-8 h-8 rounded-lg border-2 border-farmhouse-beige flex items-center justify-center hover:border-farmhouse-navy transition-all;
   }
 
   .task-button-completed {
@@ -44,11 +44,11 @@ body {
   }
 
   .task-button-incomplete {
-    @apply bg-white border-farmhouse-beige hover:border-farmhouse-sage;
+    @apply bg-white text-farmhouse-brown;
   }
 
   .primary-button {
-    @apply px-4 py-2 bg-farmhouse-navy text-white rounded-lg hover:bg-farmhouse-navy/90 flex items-center gap-2 transition-all;
+    @apply px-4 py-2 rounded-lg bg-farmhouse-navy text-white flex items-center gap-2 text-sm font-medium hover:bg-farmhouse-navy/90 transition-all;
   }
 
   .secondary-button {
@@ -60,7 +60,7 @@ body {
   }
 
   .day-button {
-    @apply w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all;
+    @apply w-8 h-8 rounded-lg flex items-center justify-center text-sm font-medium transition-all;
   }
 
   .day-button-active {
@@ -68,6 +68,6 @@ body {
   }
 
   .day-button-inactive {
-    @apply border-farmhouse-beige hover:border-farmhouse-sage text-farmhouse-brown;
+    @apply bg-white text-farmhouse-brown border border-farmhouse-beige hover:border-farmhouse-navy;
   }
 }

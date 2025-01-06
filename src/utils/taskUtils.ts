@@ -1,31 +1,25 @@
 import { Child } from '../types/types';
 
-export const getAllUniqueTasks = (children: Child[]) => {
-  const taskMap = new Map<
-    string,
-    {
-      category: string;
-      subject: string;
-      title: string;
-    }
-  >();
+export function getAllUniqueTasks(children: Child[]) {
+  const uniqueTasks = new Map();
+
   children.forEach((child) => {
     child.tasks.forEach((task) => {
       const key = `${task.subject}-${task.title}`;
-      if (!taskMap.has(key)) {
-        taskMap.set(key, {
+      if (!uniqueTasks.has(key)) {
+        uniqueTasks.set(key, {
           category: task.category,
           subject: task.subject,
           title: task.title,
+          key,
+          icon: task.icon,
         });
       }
     });
   });
-  return Array.from(taskMap.entries()).map(([key, value]) => ({
-    key,
-    ...value,
-  }));
-};
+
+  return Array.from(uniqueTasks.values());
+}
 
 export function getColorClasses(color: string) {
   switch (color) {

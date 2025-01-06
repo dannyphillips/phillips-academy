@@ -1,18 +1,18 @@
 import { ReactElement } from 'react';
-import { IconProps } from 'lucide-react';
+import { LucideIcon } from 'lucide-react';
 
 export interface TaskDetail {
-  notes?: string;
   pages?: string;
   chapter?: string;
+  notes?: string;
 }
 
 export interface Task {
   id: number;
-  category: "academic" | "routine";
+  category: string;
   subject: string;
   title: string;
-  icon: ReactElement<IconProps>;
+  icon: ReactElement<LucideIcon>;
   completed: boolean;
   frequency: number[];
   streak: number;
@@ -30,6 +30,14 @@ export interface Child {
 
 export interface TaskEditor {
   isOpen: boolean;
-  task?: Task;
   isNew: boolean;
+  task?: Task;
+}
+
+export interface UniqueTask {
+  category: string;
+  subject: string;
+  title: string;
+  key: string;
+  icon: ReactElement<LucideIcon>;
 } 

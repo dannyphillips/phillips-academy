@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { User, Trophy, Check } from 'lucide-react';
-import { Child } from '../types/types';
+import { User, Trophy, Check, Star, Flame, Users, CalendarDays, ListTodo, Plus, Edit2, Trash2, BookOpen, Palette, Music, Code, Calculator, Brain, Dumbbell, Utensils, Sun, Moon } from 'lucide-react';
+import { Child, UniqueTask } from '../types/types';
 import { getAllUniqueTasks, getColorClasses } from '../utils/taskUtils';
 
 interface ChildWeekViewProps {
@@ -23,8 +23,8 @@ export function ChildWeekView({ children, handleTaskComplete, daysOfWeek, curren
     );
   };
 
-  const allTasks = getAllUniqueTasks(children);
-  const categories = ["routine", "academic"];
+  const allTasks = getAllUniqueTasks(children) as UniqueTask[];
+  const categories = ["Morning Routine", "Evening Routine", "academic"];
 
   return (
     <div className="space-y-8">
@@ -72,21 +72,27 @@ export function ChildWeekView({ children, handleTaskComplete, daysOfWeek, curren
             {categories.map((category) => (
               <div key={category} className="space-y-2">
                 <h3 className="text-lg font-semibold text-farmhouse-navy mb-3">
-                  {category === "routine" ? "Daily Routines" : "Learning Tasks"}
+                  {category === "academic" ? "Learning Tasks" : category}
                 </h3>
                 {allTasks
-                  .filter((task) => task.category === category)
+                  .filter((task) => 
+                    category === "academic" 
+                      ? task.category === "academic"
+                      : task.category === "routine" && task.subject === category
+                  )
                   .map((task) => (
                     <div
                       key={task.key}
                       className="grid grid-cols-8 gap-2 bg-white rounded-lg p-3 items-center border border-farmhouse-beige hover:shadow-md transition-all"
                     >
-                      <div className="text-sm">
-                        <div className="font-medium text-farmhouse-navy">
-                          {task.subject}
+                      <div className="text-sm flex items-center gap-3">
+                        <div className="text-farmhouse-brown">
+                          {task.icon}
                         </div>
-                        <div className="text-farmhouse-brown text-xs">
-                          {task.title}
+                        <div>
+                          <div className="font-medium text-farmhouse-navy">
+                            {task.title}
+                          </div>
                         </div>
                       </div>
                       {[...Array(7)].map((_, dayIndex) => (
