@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { X, Save } from 'lucide-react';
-import { Child, Task, TaskEditor } from '../types/types';
+import { Child, Task, TaskEditor, EditingTask } from '../types/types';
 import { ParentListView } from './ParentListView';
 import { ParentWeekView } from './ParentWeekView';
 
@@ -17,7 +17,7 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
     isOpen: false,
     isNew: false,
   });
-  const [editingTask, setEditingTask] = useState<Partial<Task>>({});
+  const [editingTask, setEditingTask] = useState<EditingTask>({});
 
   const openTaskEditor = (task?: Task) => {
     setTaskEditor({
@@ -40,16 +40,27 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
   };
 
   const saveTask = () => {
-    if (!editingTask.subject || !editingTask.title) return;
+    if (!editingTask.subject || !editingTask.title || !editingTask.category) return;
+
+    const fullTask: Task = {
+      id: editingTask.id!,
+      category: editingTask.category,
+      subject: editingTask.subject,
+      title: editingTask.title,
+      icon: editingTask.icon!,
+      completed: editingTask.completed ?? false,
+      frequency: editingTask.frequency ?? [],
+      streak: editingTask.streak ?? 0,
+      points: editingTask.points ?? 10,
+      details: editingTask.details,
+    };
+
     setChildren((prev) =>
       prev.map((child) => ({
         ...child,
         tasks: child.tasks.map((task) =>
           task.id === editingTask.id
-            ? {
-                ...task,
-                ...editingTask,
-              }
+            ? fullTask
             : task,
         ),
       })),
@@ -123,7 +134,7 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
                 </label>
                 <input
                   type="text"
-                  value={editingTask.subject}
+                  value={editingTask.subject ?? ""}
                   onChange={(e) =>
                     setEditingTask((prev) => ({
                       ...prev,
@@ -140,7 +151,7 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
                 </label>
                 <input
                   type="text"
-                  value={editingTask.title}
+                  value={editingTask.title ?? ""}
                   onChange={(e) =>
                     setEditingTask((prev) => ({
                       ...prev,
@@ -164,7 +175,7 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
                           ...prev,
                           frequency: prev.frequency?.includes(index)
                             ? prev.frequency.filter((d) => d !== index)
-                            : [...(prev.frequency || []), index],
+                            : [...(prev.frequency ?? []), index],
                         }))
                       }
                       className={`day-button ${

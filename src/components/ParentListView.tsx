@@ -1,5 +1,5 @@
-import { Plus, Edit2, Trash2, Trophy, Star, Check, Flame, User, Users, CalendarDays, ListTodo, BookOpen, Palette, Music, Code, Calculator, Brain, Dumbbell, Utensils, Sun, Moon } from 'lucide-react';
-import { Child, Task, TaskEditor, UniqueTask } from '../types/types';
+import { Plus, Edit2, Trash2 } from 'lucide-react';
+import { Child, Task, UniqueTask } from '../types/types';
 import { getAllUniqueTasks, getColorClasses } from '../utils/taskUtils';
 
 interface ParentListViewProps {
@@ -8,7 +8,7 @@ interface ParentListViewProps {
   openTaskEditor: (task?: Task) => void;
 }
 
-export function ParentListView({ children, setChildren, openTaskEditor }: ParentListViewProps) {
+export function ParentListView({ children, openTaskEditor }: ParentListViewProps) {
   const allTasks = getAllUniqueTasks(children) as UniqueTask[];
   const categories = ["Morning Routine", "Evening Routine", "academic"];
 

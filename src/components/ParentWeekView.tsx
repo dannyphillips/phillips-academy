@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Edit2, Trash2, Trophy, Star, Check, Flame, User, Users, CalendarDays, ListTodo, BookOpen, Palette, Music, Code, Calculator, Brain, Dumbbell, Utensils, Sun, Moon } from 'lucide-react';
+import { Plus, Trophy } from 'lucide-react';
 import { Child, Task, UniqueTask } from '../types/types';
 import { getAllUniqueTasks, getColorClasses } from '../utils/taskUtils';
 

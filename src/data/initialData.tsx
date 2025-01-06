@@ -1,4 +1,3 @@
-import React from 'react';
 import { Child } from '../types/types';
 import {
   Bed,
@@ -10,12 +9,6 @@ import {
   Palette,
   Bath,
   Music,
-  Brain,
-  Dumbbell,
-  Utensils,
-  Sun,
-  Moon,
-  Code,
 } from 'lucide-react';
 
 export const initialChildren: Child[] = [

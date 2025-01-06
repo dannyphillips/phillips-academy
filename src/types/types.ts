@@ -9,7 +9,7 @@ export interface TaskDetail {
 
 export interface Task {
   id: number;
-  category: string;
+  category: "routine" | "academic";
   subject: string;
   title: string;
   icon: ReactElement<LucideIcon>;
@@ -32,6 +32,11 @@ export interface TaskEditor {
   isOpen: boolean;
   isNew: boolean;
   task?: Task;
+}
+
+export interface EditingTask extends Partial<Task> {
+  category?: "routine" | "academic";
+  frequency?: number[];
 }
 
 export interface UniqueTask {

@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Trophy, Star, Check, Flame, User, Users, CalendarDays, ListTodo, Plus, Edit2, Trash2, BookOpen, Palette, Music, Code, Calculator, Brain, Dumbbell, Utensils, Sun, Moon } from 'lucide-react';
+import { Trophy, Check, Flame } from 'lucide-react';
 import { Child } from '../types/types';
 import { getColorClasses } from '../utils/taskUtils';
 
