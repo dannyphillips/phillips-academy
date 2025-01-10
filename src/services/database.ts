@@ -20,20 +20,23 @@ const TASKS_COLLECTION = 'tasks';
 
 // Helper function to convert Firestore data to our app's data structure
 const convertFirestoreDataToChild = async (
-  childDoc: FirestoreChild,
+  childDoc: FirestoreChild & { id: string },
   tasksSnapshot: FirestoreTask[]
 ): Promise<Child> => {
   return {
-    id: parseInt(childDoc.id),
+    id: childDoc.id,
     name: childDoc.name,
+    age: childDoc.age,
+    color: childDoc.color,
     totalPoints: childDoc.totalPoints,
     tasks: tasksSnapshot.map(task => ({
-      id: parseInt(task.id),
+      id: task.id,
       title: task.title,
       completed: task.completed,
       streak: task.streak,
       points: task.points,
-      days: task.days
+      days: task.days,
+      type: task.type
     }))
   };
 };
@@ -78,14 +81,14 @@ export async function getChildren(): Promise<Child[]> {
 
 // Update a task's completion status
 export const updateTaskCompletion = async (
-  childId: number,
-  taskId: number,
+  childId: string,
+  taskId: string,
   completed: boolean,
   streak: number,
   points: number
 ): Promise<void> => {
   try {
-    const taskRef = doc(db, TASKS_COLLECTION, taskId.toString());
+    const taskRef = doc(db, TASKS_COLLECTION, taskId);
     await updateDoc(taskRef, {
       completed,
       streak,
@@ -93,8 +96,8 @@ export const updateTaskCompletion = async (
     });
 
     // Update child's total points
-    const childRef = doc(db, CHILDREN_COLLECTION, childId.toString());
-    const childSnapshot = await getDocs(query(collection(db, CHILDREN_COLLECTION), where('id', '==', childId.toString())));
+    const childRef = doc(db, CHILDREN_COLLECTION, childId);
+    const childSnapshot = await getDocs(query(collection(db, CHILDREN_COLLECTION), where('id', '==', childId)));
     const childData = childSnapshot.docs[0].data() as FirestoreChild;
 
     await updateDoc(childRef, {
@@ -107,7 +110,7 @@ export const updateTaskCompletion = async (
 };
 
 // Add a new task
-export const addTask = async (childId: number, task: Omit<Task, 'id'>): Promise<Task> => {
+export const addTask = async (childId: string, task: Omit<Task, 'id'>): Promise<Task> => {
   try {
     const tasksRef = collection(db, TASKS_COLLECTION);
     const taskSnapshot = await getDocs(tasksRef);
@@ -119,15 +122,16 @@ export const addTask = async (childId: number, task: Omit<Task, 'id'>): Promise<
       streak: task.streak,
       points: task.points,
       days: task.days,
+      type: task.type,
       id: newId,
-      childId: childId.toString()
+      childId: childId
     };
 
     await setDoc(doc(tasksRef, newId), newTask);
 
     return {
       ...task,
-      id: parseInt(newId)
+      id: newId
     };
   } catch (error) {
     console.error('Error adding task:', error);

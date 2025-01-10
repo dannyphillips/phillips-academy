@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { X, Save, Plus } from 'lucide-react';
+import { X, Save, Plus, Search } from 'lucide-react';
 import { Child, Task, TaskEditor, EditingTask } from '../types/types';
 import { ParentListView } from './ParentListView';
 import { ParentWeekView } from './ParentWeekView';
 import { addTask, addChild, updateChild, deleteChild } from '../services/database';
 import { AddChildModal } from './AddChildModal';
 import { EditChildModal } from './EditChildModal';
+import { taskTemplates } from '../data/taskTemplates';
 
 interface ParentViewProps {
   children: Child[];
@@ -23,6 +24,22 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
   const [editingTask, setEditingTask] = useState<EditingTask>({});
   const [isAddChildModalOpen, setIsAddChildModalOpen] = useState(false);
   const [editingChild, setEditingChild] = useState<Child | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  const filteredTemplates = taskTemplates.filter(template => 
+    template.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const handleTemplateSelect = (template: typeof taskTemplates[0]) => {
+    setEditingTask({
+      ...template,
+      completed: false,
+      streak: 0
+    });
+    setSearchQuery(template.title);
+    setShowSuggestions(false);
+  };
 
   const openTaskEditor = (task?: Task) => {
     setTaskEditor({
@@ -30,13 +47,21 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
       task,
       isNew: !task,
     });
-    setEditingTask(task || {
-      title: '',
-      completed: false,
-      streak: 0,
-      points: 1,
-      days: []
-    });
+    if (task) {
+      setEditingTask(task);
+      setSearchQuery(task.title);
+    } else {
+      setEditingTask({
+        title: '',
+        completed: false,
+        streak: 0,
+        points: 1,
+        days: [],
+        type: 'learning_task'
+      });
+      setSearchQuery('');
+    }
+    setShowSuggestions(false);
   };
 
   const handleSaveTask = async () => {
@@ -48,7 +73,8 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
         completed: false,
         streak: 0,
         points: editingTask.points || 1,
-        days: editingTask.days || []
+        days: editingTask.days || [],
+        type: editingTask.type || 'learning_task'
       };
 
       // Add task to database
@@ -74,13 +100,21 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
     }
   };
 
+  const handleSelectAllDays = () => {
+    setEditingTask(prev => ({
+      ...prev,
+      days: [0, 1, 2, 3, 4, 5, 6]
+    }));
+  };
+
   const handleAddChild = async (newChild: Omit<Child, 'id' | 'tasks' | 'totalPoints'>) => {
     try {
       // Add child to database
       const savedChild = await addChild({
         name: newChild.name,
         age: newChild.age,
-        color: newChild.color
+        color: newChild.color,
+        totalPoints: 0
       });
 
       // Update local state
@@ -179,20 +213,74 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-farmhouse-navy mb-1">
-                  Title
+                  Task
                 </label>
-                <input
-                  type="text"
-                  value={editingTask.title ?? ""}
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Search className="h-4 w-4 text-farmhouse-brown" />
+                  </div>
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setSearchQuery(value);
+                      setShowSuggestions(true);
+                      setEditingTask(prev => ({
+                        ...prev,
+                        title: value
+                      }));
+                    }}
+                    onFocus={() => setShowSuggestions(true)}
+                    className="input-field pl-10"
+                    placeholder="Search or enter new task..."
+                  />
+                  {showSuggestions && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-farmhouse-beige rounded-md shadow-lg max-h-60 overflow-auto">
+                      {filteredTemplates.map((template, index) => (
+                        <button
+                          key={`${template.title}-${template.type}-${index}`}
+                          className="w-full text-left px-4 py-2 hover:bg-farmhouse-cream/50 focus:bg-farmhouse-cream/50 focus:outline-none"
+                          onClick={() => handleTemplateSelect(template)}
+                        >
+                          <div className="font-medium text-farmhouse-navy">
+                            {template.title}
+                          </div>
+                          <div className="text-sm text-farmhouse-brown">
+                            {template.type.split('_').map(word => 
+                              word.charAt(0).toUpperCase() + word.slice(1)
+                            ).join(' ')}
+                          </div>
+                        </button>
+                      ))}
+                      {filteredTemplates.length === 0 && (
+                        <div className="px-4 py-2 text-farmhouse-brown italic">
+                          No matching templates. Creating new task.
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-farmhouse-navy mb-1">
+                  Type
+                </label>
+                <select
+                  value={editingTask.type ?? "learning_task"}
                   onChange={(e) =>
                     setEditingTask((prev) => ({
                       ...prev,
-                      title: e.target.value,
+                      type: e.target.value as Task['type'],
                     }))
                   }
                   className="input-field"
-                  placeholder="e.g., Brush teeth, Complete worksheet"
-                />
+                >
+                  <option value="morning_routine">Morning Routine</option>
+                  <option value="evening_routine">Evening Routine</option>
+                  <option value="learning_task">Learning Task</option>
+                  <option value="extra_task">Extra Task</option>
+                </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-farmhouse-navy mb-1">
@@ -212,9 +300,17 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-farmhouse-navy mb-1">
-                  Schedule
-                </label>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="block text-sm font-medium text-farmhouse-navy">
+                    Schedule
+                  </label>
+                  <button
+                    onClick={handleSelectAllDays}
+                    className="text-sm text-farmhouse-brown hover:text-farmhouse-navy"
+                  >
+                    Select All Days
+                  </button>
+                </div>
                 <div className="flex gap-2">
                   {daysOfWeek.map((day, index) => (
                     <button
@@ -260,8 +356,18 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
         <EditChildModal
           isOpen={!!editingChild}
           onClose={() => setEditingChild(null)}
-          onSave={handleUpdateChild}
-          onDelete={handleDeleteChild}
+          onSave={async (childId: string, updates) => {
+            await updateChild(childId, updates);
+            setChildren(prev => prev.map(child => 
+              child.id === childId 
+                ? { ...child, ...updates }
+                : child
+            ));
+          }}
+          onDelete={async (childId: string) => {
+            await deleteChild(childId);
+            setChildren(prev => prev.filter(child => child.id !== childId));
+          }}
           child={editingChild}
         />
       )}

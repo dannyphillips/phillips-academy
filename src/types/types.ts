@@ -14,6 +14,7 @@ export interface Task {
   streak: number;
   points: number;
   days: number[];
+  type: 'morning_routine' | 'evening_routine' | 'learning_task' | 'extra_task';
 }
 
 export interface Child {
@@ -47,6 +48,7 @@ export interface UniqueTask {
 export interface FirestoreTask extends Omit<Task, 'id'> {
   id: string;        // Firestore IDs are strings
   childId: string;   // Add this to link tasks to children
+  type: 'morning_routine' | 'evening_routine' | 'learning_task' | 'extra_task';
 }
 
 export interface FirestoreChild {
