@@ -5,7 +5,7 @@ import fs from 'fs'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  base: '/',
+  base: '/phillips-academy/',
   publicDir: 'public',
   build: {
     outDir: 'dist',
@@ -25,23 +25,23 @@ export default defineConfig({
         background_color: "#F5F1EA",
         display: "standalone",
         orientation: "portrait",
-        start_url: "./",
-        scope: "./",
+        start_url: "/phillips-academy/",
+        scope: "/phillips-academy/",
         icons: [
           {
-            src: "./assets/logo-circle-crop.png",
+            src: "/phillips-academy/assets/logo-circle-crop.png",
             sizes: "192x192",
             type: "image/png",
             purpose: "any maskable"
           },
           {
-            src: "./assets/logo-circle-crop.png",
+            src: "/phillips-academy/assets/logo-circle-crop.png",
             sizes: "512x512",
             type: "image/png",
             purpose: "any maskable"
           },
           {
-            src: "./assets/apple-touch-icon.png",
+            src: "/phillips-academy/assets/apple-touch-icon.png",
             sizes: "180x180",
             type: "image/png",
             purpose: "apple touch icon"

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Lock, LockOpen, CalendarDays, ListTodo, LogOut } from "lucide-react";
+import { Lock, LockOpen, CalendarDays, ListTodo } from "lucide-react";
 import { Child } from "./types/types";
 import { ChildDayView } from "./components/ChildDayView";
 import { ChildWeekView } from "./components/ChildWeekView";
@@ -50,12 +50,14 @@ export function App() {
     );
   };
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-      navigate('/login');
-    } catch (error) {
-      console.error('Failed to logout:', error);
+  const handleLockClick = async () => {
+    if (isParentUser()) {
+      try {
+        await logout();
+        navigate('/login');
+      } catch (error) {
+        console.error('Failed to logout:', error);
+      }
     }
   };
 
@@ -65,31 +67,22 @@ export function App() {
         <div className="flex flex-col gap-6">
           <div className="flex justify-between items-center">
             <img 
-              src="/assets/logo.png" 
+              src="/phillips-academy/assets/logo.png" 
               alt="Phillips Homeschool Academy" 
               className="h-24 w-auto object-contain"
             />
-            {/* Mode and Logout Toggles */}
-            <div className="flex gap-2">
-              <button
-                onClick={handleLogout}
-                className="nav-toggle !px-3"
-                title="Logout"
-              >
-                <LogOut className="w-5 h-5" />
-              </button>
-              <button
-                onClick={() => {/* You might want to handle this differently now */}}
-                className={`nav-toggle !px-3 ${isParentUser() ? 'nav-toggle-active' : ''}`}
-                title={isParentUser() ? "Parent Mode" : "Kid Mode"}
-              >
-                {isParentUser() ? (
-                  <LockOpen className="w-5 h-5" />
-                ) : (
-                  <Lock className="w-5 h-5" />
-                )}
-              </button>
-            </div>
+            {/* Lock Toggle */}
+            <button
+              onClick={handleLockClick}
+              className={`nav-toggle !px-3 ${isParentUser() ? 'nav-toggle-active' : ''}`}
+              title={isParentUser() ? "Parent Mode (Click to Logout)" : "Kid Mode"}
+            >
+              {isParentUser() ? (
+                <LockOpen className="w-5 h-5" />
+              ) : (
+                <Lock className="w-5 h-5" />
+              )}
+            </button>
           </div>
 
           {/* View Toggle */}

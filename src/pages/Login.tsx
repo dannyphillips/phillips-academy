@@ -57,7 +57,7 @@ const Login = () => {
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#F5F1EA]">
       <div className="mb-8">
         <img 
-          src="/assets/logo-circle-crop.png" 
+          src="/phillips-academy/assets/logo-circle-crop.png" 
           alt="Phillips Academy Logo" 
           className="w-24 h-24 mx-auto"
         />
