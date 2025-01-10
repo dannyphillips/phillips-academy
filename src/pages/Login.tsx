@@ -1,29 +1,46 @@
 import { useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { signIn, signUp } from '../components/Auth.ts';
-import { LoginFormData } from '../types/auth';
+import { signInWithCode } from '../components/Auth.ts';
+import { X } from 'lucide-react';
 
 const Login = () => {
   const navigate = useNavigate();
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [formData, setFormData] = useState<LoginFormData>({
-    email: '',
-    password: '',
-  });
-  const [error, setError] = useState<string>('');
+  const [code, setCode] = useState('');
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    
+    if (code.length !== 4) {
+      setError('Please enter a 4-digit code');
+      return;
+    }
+
     try {
-      if (isSignUp) {
-        await signUp(formData.email, formData.password);
-      } else {
-        await signIn(formData.email, formData.password);
-      }
+      const { isParent } = await signInWithCode(code);
       navigate('/');
     } catch (err) {
-      setError(isSignUp ? 'Failed to create account.' : 'Failed to login. Please check your credentials.');
+      setError('Invalid code. Please try again.');
     }
+  };
+
+  const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/[^0-9]/g, '').slice(0, 4);
+    setCode(value);
+  };
+
+  const handleKeypadPress = (digit: string) => {
+    if (code.length < 4) {
+      setCode(prev => prev + digit);
+    }
+  };
+
+  const handleBackspace = () => {
+    setCode(prev => prev.slice(0, -1));
+  };
+
+  const handleClear = () => {
+    setCode('');
   };
 
   return (
@@ -38,7 +55,7 @@ const Login = () => {
       <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow-lg">
         <div>
           <h2 className="text-center text-3xl font-bold text-[#1E3A8A]">
-            {isSignUp ? 'Create your account' : 'Sign in to your account'}
+            Enter Your Code
           </h2>
           {error && (
             <div className="mt-4 text-red-500 text-center text-sm">
@@ -47,55 +64,65 @@ const Login = () => {
           )}
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                required
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#1E3A8A] focus:border-[#1E3A8A]"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                required
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#1E3A8A] focus:border-[#1E3A8A]"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              />
-            </div>
+          <div>
+            <label htmlFor="code" className="block text-sm font-medium text-gray-700">
+              4-Digit Code
+            </label>
+            <input
+              id="code"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              required
+              placeholder="Enter 4-digit code"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-center text-2xl tracking-widest shadow-sm focus:outline-none focus:ring-[#1E3A8A] focus:border-[#1E3A8A]"
+              value={code}
+              onChange={handleCodeChange}
+              readOnly
+            />
           </div>
 
-          <div>
+          <div className="grid grid-cols-3 gap-4 mt-6">
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((digit) => (
+              <button
+                key={digit}
+                type="button"
+                onClick={() => handleKeypadPress(digit.toString())}
+                className="p-4 text-2xl font-semibold rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors duration-200 active:bg-gray-300"
+              >
+                {digit}
+              </button>
+            ))}
             <button
-              type="submit"
-              className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-white bg-[#1E3A8A] hover:bg-[#152C6B] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1E3A8A] transition-colors duration-200"
+              type="button"
+              onClick={handleClear}
+              className="p-4 text-lg font-semibold rounded-lg bg-gray-200 hover:bg-gray-300 transition-colors duration-200 active:bg-gray-400"
             >
-              {isSignUp ? 'Sign up' : 'Sign in'}
+              Clear
+            </button>
+            <button
+              type="button"
+              onClick={() => handleKeypadPress('0')}
+              className="p-4 text-2xl font-semibold rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors duration-200 active:bg-gray-300"
+            >
+              0
+            </button>
+            <button
+              type="button"
+              onClick={handleBackspace}
+              className="p-4 text-lg font-semibold rounded-lg bg-gray-200 hover:bg-gray-300 transition-colors duration-200 active:bg-gray-400"
+            >
+              <X className="w-6 h-6 mx-auto" />
             </button>
           </div>
-        </form>
-        <div className="text-center">
+
           <button
-            type="button"
-            onClick={() => setIsSignUp(!isSignUp)}
-            className="text-sm text-[#1E3A8A] hover:text-[#152C6B] focus:outline-none"
+            type="submit"
+            className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-white bg-[#1E3A8A] hover:bg-[#152C6B] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1E3A8A] transition-colors duration-200"
           >
-            {isSignUp 
-              ? 'Already have an account? Sign in' 
-              : "Don't have an account? Sign up"}
+            Sign In
           </button>
-        </div>
+        </form>
       </div>
     </div>
   );

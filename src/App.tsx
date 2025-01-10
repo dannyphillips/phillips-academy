@@ -1,14 +1,16 @@
 import { useState } from "react";
-import { Lock, LockOpen, CalendarDays, ListTodo } from "lucide-react";
+import { Lock, LockOpen, CalendarDays, ListTodo, LogOut } from "lucide-react";
 import { Child } from "./types/types";
 import { ChildDayView } from "./components/ChildDayView";
 import { ChildWeekView } from "./components/ChildWeekView";
 import { ParentView } from "./components/ParentView";
 import { initialChildren } from "./data/initialData";
+import { logout, isParentUser } from "./components/Auth";
+import { useNavigate } from "react-router-dom";
 
 export function App() {
+  const navigate = useNavigate();
   // Primary navigation toggles
-  const [mode, setMode] = useState<'kid' | 'parent'>('kid');
   const [view, setView] = useState<'day' | 'week'>('day');
   
   // Child state
@@ -48,6 +50,15 @@ export function App() {
     );
   };
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Failed to logout:', error);
+    }
+  };
+
   return (
     <div className="min-h-screen w-full bg-farmhouse-cream">
       <div className="max-w-7xl mx-auto p-6">
@@ -58,18 +69,27 @@ export function App() {
               alt="Phillips Homeschool Academy" 
               className="h-24 w-auto object-contain"
             />
-            {/* Mode Toggle */}
-            <button
-              onClick={() => setMode(mode === 'kid' ? 'parent' : 'kid')}
-              className={`nav-toggle !px-3 ${mode === 'parent' ? 'nav-toggle-active' : ''}`}
-              title={mode === 'parent' ? "Parent Mode (Unlocked)" : "Kid Mode (Locked)"}
-            >
-              {mode === 'parent' ? (
-                <LockOpen className="w-5 h-5" />
-              ) : (
-                <Lock className="w-5 h-5" />
-              )}
-            </button>
+            {/* Mode and Logout Toggles */}
+            <div className="flex gap-2">
+              <button
+                onClick={handleLogout}
+                className="nav-toggle !px-3"
+                title="Logout"
+              >
+                <LogOut className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => {/* You might want to handle this differently now */}}
+                className={`nav-toggle !px-3 ${isParentUser() ? 'nav-toggle-active' : ''}`}
+                title={isParentUser() ? "Parent Mode" : "Kid Mode"}
+              >
+                {isParentUser() ? (
+                  <LockOpen className="w-5 h-5" />
+                ) : (
+                  <Lock className="w-5 h-5" />
+                )}
+              </button>
+            </div>
           </div>
 
           {/* View Toggle */}
@@ -92,7 +112,15 @@ export function App() {
             </div>
           </div>
 
-          {mode === 'kid' ? (
+          {isParentUser() ? (
+            <ParentView
+              children={children}
+              setChildren={setChildren}
+              daysOfWeek={daysOfWeek}
+              currentDay={currentDay}
+              view={view}
+            />
+          ) : (
             view === 'day' ? (
               <ChildDayView
                 children={children}
@@ -111,14 +139,6 @@ export function App() {
                 currentDay={currentDay}
               />
             )
-          ) : (
-            <ParentView
-              children={children}
-              setChildren={setChildren}
-              daysOfWeek={daysOfWeek}
-              currentDay={currentDay}
-              view={view}
-            />
           )}
           </div>
       </div>

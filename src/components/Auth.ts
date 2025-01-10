@@ -1,24 +1,28 @@
 import { auth } from '../firebase/config';
 import { 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword,
+  signInAnonymously,
   signOut,
-  User as FirebaseUser
+  User as FirebaseUser 
 } from 'firebase/auth';
 
-export const signIn = async (email: string, password: string): Promise<FirebaseUser> => {
-  try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    return userCredential.user;
-  } catch (error) {
-    throw error;
-  }
-};
+const VALID_CODE = '2160';
 
-export const signUp = async (email: string, password: string): Promise<FirebaseUser> => {
+export const signInWithCode = async (code: string): Promise<{ user: FirebaseUser; isParent: boolean }> => {
   try {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    return userCredential.user;
+    if (code !== VALID_CODE) {
+      throw new Error('Invalid code');
+    }
+
+    // Sign in anonymously first
+    const { user } = await signInAnonymously(auth);
+    
+    // For now, all valid codes are parent codes
+    const isParent = true;
+    
+    // Store the user type in localStorage
+    localStorage.setItem('userType', isParent ? 'parent' : 'child');
+    
+    return { user, isParent };
   } catch (error) {
     throw error;
   }
@@ -27,7 +31,12 @@ export const signUp = async (email: string, password: string): Promise<FirebaseU
 export const logout = async (): Promise<void> => {
   try {
     await signOut(auth);
+    localStorage.removeItem('userType');
   } catch (error) {
     throw error;
   }
+};
+
+export const isParentUser = (): boolean => {
+  return localStorage.getItem('userType') === 'parent';
 }; 
