@@ -2,7 +2,22 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/assets/logo-circle-crop.png" />
+    <script type="text/javascript">
+      // Single Page Apps for GitHub Pages
+      // MIT License
+      // https://github.com/rafgraph/spa-github-pages
+      (function(l) {
+        if (l.search[1] === '/' ) {
+          var decoded = l.search.slice(1).split('&').map(function(s) { 
+            return s.replace(/~and~/g, '&')
+          }).join('?');
+          window.history.replaceState(null, null,
+              l.pathname.slice(0, -1) + decoded + l.hash
+          );
+        }
+      }(window.location))
+    </script>
+    <link rel="icon" type="image/png" href="./assets/logo-circle-crop.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="theme-color" content="#1E3A8A" />
     <meta name="description" content="A task management app for homeschool children" />
@@ -13,10 +28,10 @@
     <meta name="apple-mobile-web-app-title" content="PHA Tasks">
     
     <!-- iOS icons -->
-    <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
-    <link rel="apple-touch-icon" sizes="152x152" href="/assets/apple-touch-icon.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
-    <link rel="apple-touch-icon" sizes="167x167" href="/assets/apple-touch-icon.png">
+    <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="./assets/apple-touch-icon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="./assets/apple-touch-icon.png">
+    <link rel="apple-touch-icon" sizes="167x167" href="./assets/apple-touch-icon.png">
     
     <!-- iOS splash screens -->
     <link rel="apple-touch-startup-image" href="/assets/splash/apple-splash-2048-2732.png" media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">

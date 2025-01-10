@@ -1,10 +1,28 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import fs from 'fs'
 
 // https://vitejs.dev/config/
 export default defineConfig({
   base: '/phillips-academy/',
+  publicDir: 'public',
+  build: {
+    assetsDir: 'assets',
+    rollupOptions: {
+      output: {
+        assetFileNames: (assetInfo) => {
+          let extType = assetInfo.name.split('.')[1];
+          if (/png|jpe?g|svg|gif|tiff|bmp|ico/i.test(extType)) {
+            extType = 'img';
+          }
+          return `assets/${extType}/[name]-[hash][extname]`;
+        },
+      },
+    },
+    outDir: 'dist',
+    emptyOutDir: true,
+  },
   plugins: [
     react(),
     VitePWA({
@@ -18,23 +36,23 @@ export default defineConfig({
         background_color: "#F5F1EA",
         display: "standalone",
         orientation: "portrait",
-        start_url: "/",
-        scope: "/",
+        start_url: "./",
+        scope: "./",
         icons: [
           {
-            src: "/assets/logo-circle-crop.png",
+            src: "./assets/logo-circle-crop.png",
             sizes: "192x192",
             type: "image/png",
             purpose: "any maskable"
           },
           {
-            src: "/assets/logo-circle-crop.png",
+            src: "./assets/logo-circle-crop.png",
             sizes: "512x512",
             type: "image/png",
             purpose: "any maskable"
           },
           {
-            src: "/assets/apple-touch-icon.png",
+            src: "./assets/apple-touch-icon.png",
             sizes: "180x180",
             type: "image/png",
             purpose: "apple touch icon"
@@ -63,21 +81,27 @@ export default defineConfig({
                 statuses: [0, 200]
               }
             }
-          },
-          {
-            urlPattern: /\.(png|jpg|jpeg|svg|gif)$/,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'image-cache',
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
-              }
-            }
           }
+        ],
+        cleanupOutdatedCaches: true,
+        skipWaiting: true,
+        clientsClaim: true,
+        sourcemap: false,
+        navigateFallback: './index.html',
+        navigateFallbackDenylist: [/^\/api/],
+        globIgnores: [
+          '**/assets/**/*',  // Exclude assets from precaching
+          '**/*.map',        // Exclude source maps
+          '**/manifest.webmanifest'
         ]
       }
-    })
+    }),
+    {
+      name: 'copy-404',
+      closeBundle() {
+        fs.copyFileSync('public/404.html', 'dist/404.html')
+      }
+    }
   ],
   define: {
     'process.env': process.env
