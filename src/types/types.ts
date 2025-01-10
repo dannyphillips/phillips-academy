@@ -15,6 +15,7 @@ export interface Task {
   points: number;
   days: number[];
   type: 'morning_routine' | 'evening_routine' | 'learning_task' | 'extra_task';
+  icon: LucideIcon;
 }
 
 export interface Child {

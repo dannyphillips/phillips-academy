@@ -1,12 +1,13 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { X, Save, Plus, Search } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { Child, Task, TaskEditor, EditingTask } from '../types/types';
 import { ParentListView } from './ParentListView';
 import { ParentWeekView } from './ParentWeekView';
 import { addTask, addChild, updateChild, deleteChild } from '../services/database';
 import { AddChildModal } from './AddChildModal';
 import { EditChildModal } from './EditChildModal';
-import { taskTemplates } from '../data/taskTemplates';
+import { taskTemplates, availableIcons, TaskTemplate } from '../data/taskTemplates';
 
 interface ParentViewProps {
   children: Child[];
@@ -26,12 +27,13 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
   const [editingChild, setEditingChild] = useState<Child | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedChildren, setSelectedChildren] = useState<string[]>([]);
 
-  const filteredTemplates = taskTemplates.filter(template => 
-    template.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const handleSelectAllChildren = () => {
+    setSelectedChildren(children.map(child => child.id));
+  };
 
-  const handleTemplateSelect = (template: typeof taskTemplates[0]) => {
+  const handleTemplateSelect = (template: TaskTemplate) => {
     setEditingTask({
       ...template,
       completed: false,
@@ -65,28 +67,31 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
   };
 
   const handleSaveTask = async () => {
-    if (!editingTask.title) return;
+    if (!editingTask.title || selectedChildren.length === 0 || !editingTask.icon) return;
 
     try {
-      const newTask: Omit<Task, 'id'> = {
-        title: editingTask.title,
-        completed: false,
-        streak: 0,
-        points: editingTask.points || 1,
-        days: editingTask.days || [],
-        type: editingTask.type || 'learning_task'
-      };
+      const savePromises = selectedChildren.map(childId => {
+        const newTask: Omit<Task, 'id'> = {
+          title: editingTask.title!,
+          completed: false,
+          streak: 0,
+          points: editingTask.points || 1,
+          days: editingTask.days || [],
+          type: editingTask.type || 'learning_task',
+          icon: editingTask.icon!
+        };
+        return addTask(childId, newTask);
+      });
 
-      // Add task to database
-      const savedTask = await addTask(children[0].id, newTask);
+      const savedTasks = await Promise.all(savePromises);
 
       // Update local state
-      setChildren(
-        children.map(child =>
-          child.id === children[0].id
+      setChildren(prevChildren => 
+        prevChildren.map(child => 
+          selectedChildren.includes(child.id)
             ? {
                 ...child,
-                tasks: [...child.tasks, savedTask]
+                tasks: [...child.tasks, savedTasks[selectedChildren.indexOf(child.id)]]
               }
             : child
         )
@@ -95,6 +100,7 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
       // Reset editor state
       setTaskEditor({ isOpen: false, isNew: true });
       setEditingTask({});
+      setSelectedChildren([]);
     } catch (error) {
       console.error('Error saving task:', error);
     }
@@ -237,29 +243,104 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
                   />
                   {showSuggestions && (
                     <div className="absolute z-10 w-full mt-1 bg-white border border-farmhouse-beige rounded-md shadow-lg max-h-60 overflow-auto">
-                      {filteredTemplates.map((template, index) => (
-                        <button
-                          key={`${template.title}-${template.type}-${index}`}
-                          className="w-full text-left px-4 py-2 hover:bg-farmhouse-cream/50 focus:bg-farmhouse-cream/50 focus:outline-none"
-                          onClick={() => handleTemplateSelect(template)}
-                        >
-                          <div className="font-medium text-farmhouse-navy">
-                            {template.title}
-                          </div>
-                          <div className="text-sm text-farmhouse-brown">
-                            {template.type.split('_').map(word => 
+                      {Object.entries(taskTemplates).map(([type, templates]) => (
+                        <div key={type}>
+                          <div className="px-4 py-2 bg-farmhouse-cream/50 font-medium text-farmhouse-navy">
+                            {type.split('_').map(word => 
                               word.charAt(0).toUpperCase() + word.slice(1)
                             ).join(' ')}
                           </div>
-                        </button>
+                          {templates
+                            .filter((template: TaskTemplate) => 
+                              template.title.toLowerCase().includes(searchQuery.toLowerCase())
+                            )
+                            .map((template: TaskTemplate, index: number) => (
+                              <button
+                                key={`${template.title}-${index}`}
+                                className="w-full text-left px-4 py-2 hover:bg-farmhouse-cream/50 focus:bg-farmhouse-cream/50 focus:outline-none"
+                                onClick={() => handleTemplateSelect(template)}
+                              >
+                                <div className="flex items-center gap-2">
+                                  {React.createElement(template.icon, {
+                                    className: "w-4 h-4 text-farmhouse-brown"
+                                  })}
+                                  <div className="font-medium text-farmhouse-navy">
+                                    {template.title}
+                                  </div>
+                                </div>
+                              </button>
+                            ))}
+                        </div>
                       ))}
-                      {filteredTemplates.length === 0 && (
+                      {Object.values(taskTemplates).every((templates: TaskTemplate[]) => 
+                        templates.every((template: TaskTemplate) => 
+                          !template.title.toLowerCase().includes(searchQuery.toLowerCase())
+                        )
+                      ) && (
                         <div className="px-4 py-2 text-farmhouse-brown italic">
                           No matching templates. Creating new task.
                         </div>
                       )}
                     </div>
                   )}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-farmhouse-navy mb-1">
+                  Icon
+                </label>
+                <div className="grid grid-cols-8 gap-2 p-2 border border-farmhouse-beige rounded-md">
+                  {Object.entries(availableIcons).map(([name, Icon]) => {
+                    const IconComponent = Icon as LucideIcon;
+                    return (
+                      <button
+                        key={name}
+                        onClick={() => setEditingTask(prev => ({ ...prev, icon: IconComponent }))}
+                        className={`p-2 rounded hover:bg-farmhouse-cream/50 ${
+                          editingTask.icon === IconComponent ? 'bg-farmhouse-cream' : ''
+                        }`}
+                        title={name}
+                      >
+                        {React.createElement(IconComponent, {
+                          className: "w-5 h-5 text-farmhouse-brown"
+                        })}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="block text-sm font-medium text-farmhouse-navy">
+                    Assign to Children
+                  </label>
+                  <button
+                    onClick={handleSelectAllChildren}
+                    className="text-sm text-farmhouse-brown hover:text-farmhouse-navy"
+                  >
+                    Select All
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {children.map((child) => (
+                    <button
+                      key={child.id}
+                      onClick={() => {
+                        setSelectedChildren(prev =>
+                          prev.includes(child.id)
+                            ? prev.filter(id => id !== child.id)
+                            : [...prev, child.id]
+                        );
+                      }}
+                      className={`px-3 py-1 rounded-full border-2 transition-colors ${
+                        selectedChildren.includes(child.id)
+                          ? 'bg-farmhouse-navy text-white border-farmhouse-navy'
+                          : 'border-farmhouse-beige text-farmhouse-brown hover:border-farmhouse-navy'
+                      }`}
+                    >
+                      {child.name}
+                    </button>
+                  ))}
                 </div>
               </div>
               <div>
