@@ -8,20 +8,9 @@ export default defineConfig({
   base: '/phillips-academy/',
   publicDir: 'public',
   build: {
-    assetsDir: 'assets',
-    rollupOptions: {
-      output: {
-        assetFileNames: (assetInfo) => {
-          let extType = assetInfo.name.split('.')[1];
-          if (/png|jpe?g|svg|gif|tiff|bmp|ico/i.test(extType)) {
-            extType = 'img';
-          }
-          return `assets/${extType}/[name]-[hash][extname]`;
-        },
-      },
-    },
     outDir: 'dist',
     emptyOutDir: true,
+    assetsDir: 'assets',
   },
   plugins: [
     react(),
@@ -88,10 +77,10 @@ export default defineConfig({
         clientsClaim: true,
         sourcemap: false,
         navigateFallback: './index.html',
-        navigateFallbackDenylist: [/^\/api/],
+        navigateFallbackDenylist: [/^\/api/, /^\/assets\//],  // Don't redirect asset requests
         globIgnores: [
-          '**/assets/**/*',  // Exclude assets from precaching
-          '**/*.map',        // Exclude source maps
+          '**/assets/**/*',
+          '**/*.map',
           '**/manifest.webmanifest'
         ]
       }

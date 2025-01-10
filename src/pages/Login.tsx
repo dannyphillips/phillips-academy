@@ -43,6 +43,12 @@ const Login = () => {
     setCode('');
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && code.length === 4) {
+      handleSubmit(e);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#F5F1EA]">
       <div className="mb-8">
@@ -78,7 +84,9 @@ const Login = () => {
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-center text-2xl tracking-widest shadow-sm focus:outline-none focus:ring-[#1E3A8A] focus:border-[#1E3A8A]"
               value={code}
               onChange={handleCodeChange}
-              readOnly
+              onKeyDown={handleKeyDown}
+              maxLength={4}
+              autoFocus
             />
           </div>
 
