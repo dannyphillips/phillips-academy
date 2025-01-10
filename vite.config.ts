@@ -32,19 +32,19 @@ export default defineConfig({
             src: "/phillips-academy/assets/logo-circle-crop.png",
             sizes: "192x192",
             type: "image/png",
-            purpose: "any maskable"
+            purpose: "maskable"
           },
           {
             src: "/phillips-academy/assets/logo-circle-crop.png",
             sizes: "512x512",
             type: "image/png",
-            purpose: "any maskable"
+            purpose: "any"
           },
           {
             src: "/phillips-academy/assets/apple-touch-icon.png",
             sizes: "180x180",
             type: "image/png",
-            purpose: "apple touch icon"
+            purpose: "any"
           }
         ]
       },

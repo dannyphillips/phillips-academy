@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { X, Save } from 'lucide-react';
+import { X, Save, Plus } from 'lucide-react';
 import { Child, Task, TaskEditor, EditingTask } from '../types/types';
 import { ParentListView } from './ParentListView';
 import { ParentWeekView } from './ParentWeekView';
-import { addTask } from '../services/database';
+import { addTask, addChild, updateChild, deleteChild } from '../services/database';
+import { AddChildModal } from './AddChildModal';
+import { EditChildModal } from './EditChildModal';
 
 interface ParentViewProps {
   children: Child[];
@@ -19,6 +21,8 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
     isNew: true
   });
   const [editingTask, setEditingTask] = useState<EditingTask>({});
+  const [isAddChildModalOpen, setIsAddChildModalOpen] = useState(false);
+  const [editingChild, setEditingChild] = useState<Child | null>(null);
 
   const openTaskEditor = (task?: Task) => {
     setTaskEditor({
@@ -70,24 +74,94 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
     }
   };
 
+  const handleAddChild = async (newChild: Omit<Child, 'id' | 'tasks' | 'totalPoints'>) => {
+    try {
+      // Add child to database
+      const savedChild = await addChild({
+        name: newChild.name,
+        age: newChild.age,
+        color: newChild.color
+      });
+
+      // Update local state
+      setChildren(prev => [...prev, savedChild]);
+    } catch (error) {
+      console.error('Error saving child:', error);
+      // TODO: Show error message to user
+    }
+  };
+
+  const handleUpdateChild = async (
+    childId: string,
+    updates: Partial<Omit<Child, 'id' | 'tasks'>>
+  ) => {
+    try {
+      await updateChild(childId, updates);
+      setChildren(prev => prev.map(child => 
+        child.id === childId 
+          ? { ...child, ...updates }
+          : child
+      ));
+    } catch (error) {
+      console.error('Error updating child:', error);
+    }
+  };
+
+  const handleDeleteChild = async (childId: string) => {
+    try {
+      await deleteChild(childId);
+      setChildren(prev => prev.filter(child => child.id !== childId));
+    } catch (error) {
+      console.error('Error deleting child:', error);
+    }
+  };
+
   return (
     <>
-      {view === 'day' ? (
-        <ParentListView
-          children={children}
-          setChildren={setChildren}
-          openTaskEditor={openTaskEditor}
-        />
-      ) : (
-        <ParentWeekView
-          children={children}
-          setChildren={setChildren}
-          daysOfWeek={daysOfWeek}
-          currentDay={currentDay}
-          openTaskEditor={openTaskEditor}
-        />
-      )}
+      <div className="space-y-6">
+        <header className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold text-farmhouse-navy">Manage Agenda</h1>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setIsAddChildModalOpen(true)}
+              className="secondary-button"
+            >
+              Add Child
+            </button>
+            <button
+              onClick={() => openTaskEditor()}
+              className="primary-button"
+            >
+              <Plus className="w-4 h-4" />
+              New Task
+            </button>
+          </div>
+        </header>
+        {view === 'day' ? (
+          <ParentListView
+            children={children}
+            setChildren={setChildren}
+            openTaskEditor={openTaskEditor}
+            onEditChild={setEditingChild}
+          />
+        ) : (
+          <ParentWeekView
+            children={children}
+            setChildren={setChildren}
+            daysOfWeek={daysOfWeek}
+            currentDay={currentDay}
+            onEditChild={setEditingChild}
+            openTaskEditor={openTaskEditor}
+          />
+        )}
+      </div>
 
+      <AddChildModal
+        isOpen={isAddChildModalOpen}
+        onClose={() => setIsAddChildModalOpen(false)}
+        onSave={handleAddChild}
+      />
+      
       {taskEditor.isOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
           <div className="bg-white rounded-lg w-full max-w-2xl p-6 space-y-6">
@@ -180,6 +254,16 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
             </div>
           </div>
         </div>
+      )}
+
+      {editingChild && (
+        <EditChildModal
+          isOpen={!!editingChild}
+          onClose={() => setEditingChild(null)}
+          onSave={handleUpdateChild}
+          onDelete={handleDeleteChild}
+          child={editingChild}
+        />
       )}
     </>
   );

@@ -8,7 +8,7 @@ export interface TaskDetail {
 }
 
 export interface Task {
-  id: number;
+  id: string;
   title: string;
   completed: boolean;
   streak: number;
@@ -17,11 +17,12 @@ export interface Task {
 }
 
 export interface Child {
-  id: number;
+  id: string;
   name: string;
+  age: number;
+  color: string;
   totalPoints: number;
   tasks: Task[];
-  color?: string;
 }
 
 export interface TaskEditor {
@@ -48,6 +49,9 @@ export interface FirestoreTask extends Omit<Task, 'id'> {
   childId: string;   // Add this to link tasks to children
 }
 
-export interface FirestoreChild extends Omit<Child, 'id' | 'tasks'> {
-  id: string;        // Firestore IDs are strings
+export interface FirestoreChild {
+  name: string;
+  age: number;
+  color: string;
+  totalPoints: number;
 } 

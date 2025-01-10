@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Trophy } from 'lucide-react';
+import { Plus, Trophy, Edit2 } from 'lucide-react';
 import { Child, Task, UniqueTask } from '../types/types';
 import { getAllUniqueTasks, getColorClasses } from '../utils/taskUtils';
 
@@ -9,9 +9,10 @@ interface ParentWeekViewProps {
   daysOfWeek: string[];
   currentDay: number;
   openTaskEditor: (task?: Task) => void;
+  onEditChild: (child: Child) => void;
 }
 
-export function ParentWeekView({ children, setChildren, daysOfWeek, currentDay, openTaskEditor }: ParentWeekViewProps) {
+export function ParentWeekView({ children, setChildren, daysOfWeek, currentDay, openTaskEditor, onEditChild }: ParentWeekViewProps) {
   const allTasks = getAllUniqueTasks(children) as UniqueTask[];
   const categories = ["Morning Routine", "Evening Routine", "academic"];
   const [visibleChildren, setVisibleChildren] = useState<number[]>(
@@ -41,24 +42,37 @@ export function ParentWeekView({ children, setChildren, daysOfWeek, currentDay, 
 
       <div className="flex gap-4 items-center flex-wrap">
         {children.map((child) => {
-          const childColors = getColorClasses(child.color);
+          const childColors = getColorClasses(child.color || 'blue');
           const isVisible = visibleChildren.includes(child.id);
           return (
-            <button
+            <div
               key={child.id}
-              onClick={() => toggleChildVisibility(child.id)}
-              className={`px-4 py-2 rounded-lg transition-all flex items-center gap-3 border-2 ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all border-2 ${
                 isVisible ? `${childColors.bg} border-transparent` : childColors.muted
               }`}
             >
-              <span className={isVisible ? 'text-white' : ''}>
-                {child.name}
-              </span>
-              <div className={`flex items-center gap-1 ${isVisible ? 'text-white/90' : ''}`}>
-                <Trophy className="w-4 h-4" />
-                <span className="font-medium">{child.totalPoints}</span>
-              </div>
-            </button>
+              <button
+                onClick={() => toggleChildVisibility(child.id)}
+                className="flex items-center gap-2"
+              >
+                <span className={isVisible ? 'text-white' : ''}>
+                  {child.name}
+                </span>
+                <div className={`flex items-center gap-1 ${isVisible ? 'text-white/90' : ''}`}>
+                  <Trophy className="w-4 h-4" />
+                  <span className="font-medium">{child.totalPoints}</span>
+                </div>
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEditChild(child);
+                }}
+                className="p-1 text-farmhouse-brown hover:text-farmhouse-navy rounded-full hover:bg-farmhouse-beige/50"
+              >
+                <Edit2 className="w-4 h-4" />
+              </button>
+            </div>
           );
         })}
       </div>
@@ -69,7 +83,7 @@ export function ParentWeekView({ children, setChildren, daysOfWeek, currentDay, 
             <div className="font-medium text-farmhouse-brown">Tasks</div>
             {daysOfWeek.map((day, index) => (
               <div
-                key={day}
+                key={`header-${day}`}
                 className={`font-medium text-center ${index === currentDay ? "text-farmhouse-navy" : "text-farmhouse-brown"}`}
               >
                 {day}
@@ -78,7 +92,7 @@ export function ParentWeekView({ children, setChildren, daysOfWeek, currentDay, 
           </div>
           <div className="space-y-6">
             {categories.map((category) => (
-              <div key={category} className="space-y-2">
+              <div key={`category-${category}`} className="space-y-2">
                 <h3 className="text-lg font-semibold text-farmhouse-navy mb-3">
                   {category === "academic" ? "Learning Tasks" : category}
                 </h3>
@@ -90,7 +104,7 @@ export function ParentWeekView({ children, setChildren, daysOfWeek, currentDay, 
                   )
                   .map((task) => (
                     <div
-                      key={task.key}
+                      key={`task-${task.key}`}
                       className="grid grid-cols-8 gap-2 bg-white rounded-lg p-3 items-center border border-farmhouse-beige hover:shadow-md transition-all"
                     >
                       <div className="text-sm flex items-center gap-3">
@@ -103,24 +117,22 @@ export function ParentWeekView({ children, setChildren, daysOfWeek, currentDay, 
                           </div>
                         </div>
                       </div>
-                      {[...Array(7)].map((_, dayIndex) => (
+                      {daysOfWeek.map((_, dayIndex) => (
                         <div
-                          key={dayIndex}
+                          key={`task-${task.key}-day-${dayIndex}`}
                           className="flex flex-wrap justify-center gap-1 p-1"
                         >
                           {children.map((child) => {
                             if (!visibleChildren.includes(child.id)) return null;
                             const childTask = child.tasks.find(
                               (t) =>
-                                t.subject === task.subject &&
-                                t.title === task.title,
+                                t.title === task.title
                             );
-                            const isAssigned =
-                              childTask?.frequency.includes(dayIndex);
-                            const colors = getColorClasses(child.color);
+                            const isAssigned = childTask?.days.includes(dayIndex);
+                            const colors = getColorClasses(child.color || 'blue');
                             return (
                               <button
-                                key={child.id}
+                                key={`task-${task.key}-day-${dayIndex}-child-${child.id}`}
                                 onClick={() => {
                                   setChildren((prev) =>
                                     prev.map((c) => {

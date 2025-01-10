@@ -8,7 +8,9 @@ import {
   query,
   where,
   DocumentReference,
-  CollectionReference
+  CollectionReference,
+  addDoc,
+  deleteDoc
 } from 'firebase/firestore';
 import { Child, Task, FirestoreChild, FirestoreTask } from '../types/types';
 
@@ -37,26 +39,34 @@ const convertFirestoreDataToChild = async (
 };
 
 // Get all children and their tasks
-export const getChildren = async (): Promise<Child[]> => {
+export async function getChildren(): Promise<Child[]> {
   try {
-    const childrenSnapshot = await getDocs(collection(db, CHILDREN_COLLECTION));
+    const querySnapshot = await getDocs(collection(db, 'children'));
     const children: Child[] = [];
 
-    for (const childDoc of childrenSnapshot.docs) {
-      const childData = childDoc.data() as FirestoreChild;
+    for (const doc of querySnapshot.docs) {
+      const childData = doc.data() as FirestoreChild;
       
       // Get tasks for this child
-      const tasksQuery = query(
-        collection(db, TASKS_COLLECTION),
-        where('childId', '==', childDoc.id)
-      );
-      const tasksSnapshot = await getDocs(tasksQuery);
-      const tasks = tasksSnapshot.docs.map(doc => ({
-        ...doc.data(),
-        id: doc.id
-      })) as FirestoreTask[];
+      const tasksSnapshot = await getDocs(collection(db, 'tasks'));
+      const tasks = tasksSnapshot.docs
+        .map(taskDoc => {
+          const task = taskDoc.data();
+          return task.childId === doc.id ? {
+            id: taskDoc.id,
+            ...task
+          } : null;
+        })
+        .filter((task): task is Task => task !== null);
 
-      children.push(await convertFirestoreDataToChild(childData, tasks));
+      children.push({
+        id: doc.id,
+        name: childData.name,
+        age: childData.age,
+        color: childData.color,
+        totalPoints: childData.totalPoints,
+        tasks
+      });
     }
 
     return children;
@@ -64,7 +74,7 @@ export const getChildren = async (): Promise<Child[]> => {
     console.error('Error getting children:', error);
     throw error;
   }
-};
+}
 
 // Update a task's completion status
 export const updateTaskCompletion = async (
@@ -123,4 +133,59 @@ export const addTask = async (childId: number, task: Omit<Task, 'id'>): Promise<
     console.error('Error adding task:', error);
     throw error;
   }
-}; 
+};
+
+export async function addChild(child: Omit<Child, 'id' | 'tasks'>): Promise<Child> {
+  try {
+    // Create the child document in Firestore
+    const childRef = await addDoc(collection(db, 'children'), {
+      name: child.name,
+      age: child.age,
+      color: child.color,
+      totalPoints: 0
+    });
+
+    // Return the complete child object
+    return {
+      id: childRef.id,
+      name: child.name,
+      age: child.age,
+      color: child.color,
+      totalPoints: 0,
+      tasks: []
+    };
+  } catch (error) {
+    console.error('Error adding child:', error);
+    throw error;
+  }
+}
+
+export async function updateChild(
+  childId: string,
+  updates: Partial<Omit<Child, 'id' | 'tasks'>>
+): Promise<void> {
+  try {
+    const childRef = doc(db, 'children', childId);
+    await updateDoc(childRef, updates);
+  } catch (error) {
+    console.error('Error updating child:', error);
+    throw error;
+  }
+}
+
+export async function deleteChild(childId: string): Promise<void> {
+  try {
+    await deleteDoc(doc(db, 'children', childId));
+    
+    // Delete all tasks associated with this child
+    const tasksSnapshot = await getDocs(collection(db, 'tasks'));
+    const deletePromises = tasksSnapshot.docs
+      .filter(doc => doc.data().childId === childId)
+      .map(doc => deleteDoc(doc.ref));
+    
+    await Promise.all(deletePromises);
+  } catch (error) {
+    console.error('Error deleting child:', error);
+    throw error;
+  }
+} 
