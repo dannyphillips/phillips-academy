@@ -51,13 +51,11 @@ export function App() {
   };
 
   const handleLockClick = async () => {
-    if (isParentUser()) {
-      try {
-        await logout();
-        navigate('/login');
-      } catch (error) {
-        console.error('Failed to logout:', error);
-      }
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Failed to logout:', error);
     }
   };
 
@@ -75,7 +73,7 @@ export function App() {
             <button
               onClick={handleLockClick}
               className={`nav-toggle !px-3 ${isParentUser() ? 'nav-toggle-active' : ''}`}
-              title={isParentUser() ? "Parent Mode (Click to Logout)" : "Kid Mode"}
+              title={isParentUser() ? "Parent Mode (Click to Logout)" : "Kid Mode (Click to Logout)"}
             >
               {isParentUser() ? (
                 <LockOpen className="w-5 h-5" />

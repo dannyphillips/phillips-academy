@@ -5,19 +5,20 @@ import {
   User as FirebaseUser 
 } from 'firebase/auth';
 
-const VALID_CODE = '2160';
+const PARENT_CODE = '0000';
+const KID_CODE = '2160';
 
 export const signInWithCode = async (code: string): Promise<{ user: FirebaseUser; isParent: boolean }> => {
   try {
-    if (code !== VALID_CODE) {
+    if (code !== PARENT_CODE && code !== KID_CODE) {
       throw new Error('Invalid code');
     }
 
     // Sign in anonymously first
     const { user } = await signInAnonymously(auth);
     
-    // For now, all valid codes are parent codes
-    const isParent = true;
+    // Determine if parent based on code
+    const isParent = code === PARENT_CODE;
     
     // Store the user type in localStorage
     localStorage.setItem('userType', isParent ? 'parent' : 'child');
