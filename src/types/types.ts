@@ -9,23 +9,19 @@ export interface TaskDetail {
 
 export interface Task {
   id: number;
-  category: "routine" | "academic";
-  subject: string;
   title: string;
-  icon: ReactElement<LucideIcon>;
   completed: boolean;
-  frequency: number[];
   streak: number;
   points: number;
-  details?: TaskDetail;
+  days: number[];
 }
 
 export interface Child {
   id: number;
   name: string;
-  color: string;
   totalPoints: number;
   tasks: Task[];
+  color?: string;
 }
 
 export interface TaskEditor {
@@ -35,8 +31,7 @@ export interface TaskEditor {
 }
 
 export interface EditingTask extends Partial<Task> {
-  category?: "routine" | "academic";
-  frequency?: number[];
+  days?: number[];
 }
 
 export interface UniqueTask {
@@ -44,5 +39,15 @@ export interface UniqueTask {
   subject: string;
   title: string;
   key: string;
-  icon: ReactElement<LucideIcon>;
+  icon: LucideIcon;
+}
+
+// New types for Firestore
+export interface FirestoreTask extends Omit<Task, 'id'> {
+  id: string;        // Firestore IDs are strings
+  childId: string;   // Add this to link tasks to children
+}
+
+export interface FirestoreChild extends Omit<Child, 'id' | 'tasks'> {
+  id: string;        // Firestore IDs are strings
 } 

@@ -3,6 +3,7 @@ import { X, Save } from 'lucide-react';
 import { Child, Task, TaskEditor, EditingTask } from '../types/types';
 import { ParentListView } from './ParentListView';
 import { ParentWeekView } from './ParentWeekView';
+import { addTask } from '../services/database';
 
 interface ParentViewProps {
   children: Child[];
@@ -15,7 +16,7 @@ interface ParentViewProps {
 export function ParentView({ children, setChildren, daysOfWeek, currentDay, view }: ParentViewProps) {
   const [taskEditor, setTaskEditor] = useState<TaskEditor>({
     isOpen: false,
-    isNew: false,
+    isNew: true
   });
   const [editingTask, setEditingTask] = useState<EditingTask>({});
 
@@ -25,51 +26,48 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
       task,
       isNew: !task,
     });
-    setEditingTask(
-      task || {
-        id: Math.max(0, ...children.flatMap((c) => c.tasks.map((t) => t.id))) + 1,
-        category: "routine",
-        subject: "",
-        title: "",
-        completed: false,
-        frequency: [],
-        streak: 0,
-        points: 10,
-      },
-    );
+    setEditingTask(task || {
+      title: '',
+      completed: false,
+      streak: 0,
+      points: 1,
+      days: []
+    });
   };
 
-  const saveTask = () => {
-    if (!editingTask.subject || !editingTask.title || !editingTask.category) return;
+  const handleSaveTask = async () => {
+    if (!editingTask.title) return;
 
-    const fullTask: Task = {
-      id: editingTask.id!,
-      category: editingTask.category,
-      subject: editingTask.subject,
-      title: editingTask.title,
-      icon: editingTask.icon!,
-      completed: editingTask.completed ?? false,
-      frequency: editingTask.frequency ?? [],
-      streak: editingTask.streak ?? 0,
-      points: editingTask.points ?? 10,
-      details: editingTask.details,
-    };
+    try {
+      const newTask: Omit<Task, 'id'> = {
+        title: editingTask.title,
+        completed: false,
+        streak: 0,
+        points: editingTask.points || 1,
+        days: editingTask.days || []
+      };
 
-    setChildren((prev) =>
-      prev.map((child) => ({
-        ...child,
-        tasks: child.tasks.map((task) =>
-          task.id === editingTask.id
-            ? fullTask
-            : task,
-        ),
-      })),
-    );
-    setTaskEditor({
-      isOpen: false,
-      isNew: false,
-    });
-    setEditingTask({});
+      // Add task to database
+      const savedTask = await addTask(children[0].id, newTask);
+
+      // Update local state
+      setChildren(
+        children.map(child =>
+          child.id === children[0].id
+            ? {
+                ...child,
+                tasks: [...child.tasks, savedTask]
+              }
+            : child
+        )
+      );
+
+      // Reset editor state
+      setTaskEditor({ isOpen: false, isNew: true });
+      setEditingTask({});
+    } catch (error) {
+      console.error('Error saving task:', error);
+    }
   };
 
   return (
@@ -98,53 +96,13 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
                 {taskEditor.isNew ? "New Task" : "Edit Task"}
               </h2>
               <button
-                onClick={() =>
-                  setTaskEditor({
-                    isOpen: false,
-                    isNew: false,
-                  })
-                }
+                onClick={() => setTaskEditor({ isOpen: false, isNew: false })}
                 className="p-2 text-farmhouse-brown hover:text-farmhouse-navy rounded-full hover:bg-farmhouse-beige/50"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-farmhouse-navy mb-1">
-                  Category
-                </label>
-                <select
-                  value={editingTask.category}
-                  onChange={(e) =>
-                    setEditingTask((prev) => ({
-                      ...prev,
-                      category: e.target.value as "routine" | "academic",
-                    }))
-                  }
-                  className="input-field"
-                >
-                  <option value="routine">Daily Routine</option>
-                  <option value="academic">Learning Task</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-farmhouse-navy mb-1">
-                  Subject
-                </label>
-                <input
-                  type="text"
-                  value={editingTask.subject ?? ""}
-                  onChange={(e) =>
-                    setEditingTask((prev) => ({
-                      ...prev,
-                      subject: e.target.value,
-                    }))
-                  }
-                  className="input-field"
-                  placeholder="e.g., Morning Routine, Math"
-                />
-              </div>
               <div>
                 <label className="block text-sm font-medium text-farmhouse-navy mb-1">
                   Title
@@ -164,6 +122,23 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
               </div>
               <div>
                 <label className="block text-sm font-medium text-farmhouse-navy mb-1">
+                  Points
+                </label>
+                <input
+                  type="number"
+                  value={editingTask.points ?? 1}
+                  onChange={(e) =>
+                    setEditingTask((prev) => ({
+                      ...prev,
+                      points: parseInt(e.target.value) || 1,
+                    }))
+                  }
+                  className="input-field"
+                  min="1"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-farmhouse-navy mb-1">
                   Schedule
                 </label>
                 <div className="flex gap-2">
@@ -173,13 +148,13 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
                       onClick={() =>
                         setEditingTask((prev) => ({
                           ...prev,
-                          frequency: prev.frequency?.includes(index)
-                            ? prev.frequency.filter((d) => d !== index)
-                            : [...(prev.frequency ?? []), index],
+                          days: prev.days?.includes(index)
+                            ? prev.days.filter((d) => d !== index)
+                            : [...(prev.days ?? []), index],
                         }))
                       }
                       className={`day-button ${
-                        editingTask.frequency?.includes(index) ? 'day-button-active' : 'day-button-inactive'
+                        editingTask.days?.includes(index) ? 'day-button-active' : 'day-button-inactive'
                       }`}
                     >
                       {day[0]}
@@ -190,18 +165,13 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
             </div>
             <div className="flex justify-end gap-2 pt-4">
               <button
-                onClick={() =>
-                  setTaskEditor({
-                    isOpen: false,
-                    isNew: false,
-                  })
-                }
+                onClick={() => setTaskEditor({ isOpen: false, isNew: false })}
                 className="secondary-button"
               >
                 Cancel
               </button>
               <button
-                onClick={saveTask}
+                onClick={handleSaveTask}
                 className="primary-button"
               >
                 <Save className="w-4 h-4" />

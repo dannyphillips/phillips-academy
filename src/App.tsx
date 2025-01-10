@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Lock, LockOpen, CalendarDays, ListTodo } from "lucide-react";
 import { Child } from "./types/types";
 import { ChildDayView } from "./components/ChildDayView";
@@ -7,6 +7,7 @@ import { ParentView } from "./components/ParentView";
 import { initialChildren } from "./data/initialData";
 import { logout, isParentUser } from "./components/Auth";
 import { useNavigate } from "react-router-dom";
+import { getChildren, updateTaskCompletion } from "./services/database";
 
 export function App() {
   const navigate = useNavigate();
@@ -17,37 +18,65 @@ export function App() {
   const [activeChild, setActiveChild] = useState(0);
   const [selectedDay, setSelectedDay] = useState(new Date().getDay());
   const [children, setChildren] = useState<Child[]>(initialChildren);
+  const [loading, setLoading] = useState(true);
 
   // Constants
   const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const currentDay = new Date().getDay();
 
-  const handleTaskComplete = (childId: number, taskId: number) => {
-    setChildren(
-      children.map((child) =>
-        child.id === childId
-          ? {
-              ...child,
-              tasks: child.tasks.map((task) =>
-                task.id === taskId
-                  ? {
-                      ...task,
-                      completed: !task.completed,
-                      streak: !task.completed ? task.streak + 1 : 0,
-                      points: !task.completed
-                        ? task.points + task.streak * 2
-                        : task.points,
-                    }
-                  : task,
-              ),
-              totalPoints: !child.tasks.find((t) => t.id === taskId)?.completed
-                ? child.totalPoints +
-                  (child.tasks.find((t) => t.id === taskId)?.points || 0)
-                : child.totalPoints,
-            }
-          : child,
-      ),
-    );
+  useEffect(() => {
+    const loadChildren = async () => {
+      try {
+        const loadedChildren = await getChildren();
+        setChildren(loadedChildren);
+      } catch (error) {
+        console.error('Error loading children:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadChildren();
+  }, []);
+
+  const handleTaskComplete = async (childId: number, taskId: number) => {
+    const child = children.find(c => c.id === childId);
+    const task = child?.tasks.find(t => t.id === taskId);
+    
+    if (!child || !task) return;
+
+    const newCompleted = !task.completed;
+    const newStreak = newCompleted ? task.streak + 1 : 0;
+    const newPoints = newCompleted ? task.points + task.streak * 2 : task.points;
+
+    try {
+      await updateTaskCompletion(childId, taskId, newCompleted, newStreak, newPoints);
+      
+      setChildren(
+        children.map((c) =>
+          c.id === childId
+            ? {
+                ...c,
+                tasks: c.tasks.map((t) =>
+                  t.id === taskId
+                    ? {
+                        ...t,
+                        completed: newCompleted,
+                        streak: newStreak,
+                        points: newPoints,
+                      }
+                    : t
+                ),
+                totalPoints: newCompleted
+                  ? c.totalPoints + newPoints
+                  : c.totalPoints,
+              }
+            : c
+        )
+      );
+    } catch (error) {
+      console.error('Error updating task:', error);
+    }
   };
 
   const handleLockClick = async () => {
@@ -58,6 +87,10 @@ export function App() {
       console.error('Failed to logout:', error);
     }
   };
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="min-h-screen w-full bg-farmhouse-cream">
