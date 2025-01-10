@@ -4,6 +4,11 @@
 
 body {
   @apply bg-farmhouse-cream;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 @layer components {
@@ -70,4 +75,36 @@ body {
   .day-button-inactive {
     @apply bg-white text-farmhouse-brown border border-farmhouse-beige hover:border-farmhouse-navy;
   }
+}
+
+/* Prevent text size adjustment on orientation change */
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Prevent element highlighting on tap */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Prevent rubber-band scrolling */
+body {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+#root {
+  height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent text selection */
+.no-select {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }

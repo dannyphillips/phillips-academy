@@ -16,6 +16,7 @@ export default defineConfig({
         theme_color: "#1E3A8A",
         background_color: "#F5F1EA",
         display: "standalone",
+        orientation: "portrait",
         start_url: "/",
         scope: "/",
         icons: [
@@ -30,6 +31,12 @@ export default defineConfig({
             sizes: "512x512",
             type: "image/png",
             purpose: "any maskable"
+          },
+          {
+            src: "/assets/apple-touch-icon.png",
+            sizes: "180x180",
+            type: "image/png",
+            purpose: "apple touch icon"
           }
         ]
       },
