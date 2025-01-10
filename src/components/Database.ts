@@ -1,5 +1,5 @@
 import { db } from '../firebase/config';
-import { collection, addDoc, getDocs, query, where } from 'firebase/firestore';
+import { collection, addDoc, getDocs } from 'firebase/firestore';
 
 export const addData = async (collectionName: string, data: any): Promise<string> => {
   try {

@@ -17,7 +17,7 @@ const Login = () => {
     }
 
     try {
-      const { isParent } = await signInWithCode(code);
+      await signInWithCode(code);
       navigate('/');
     } catch (err) {
       setError('Invalid code. Please try again.');
