@@ -10,7 +10,7 @@ import './index.css';
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
     <AuthProvider>
-      <Router basename="/phillips-academy">
+      <Router>
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route

@@ -27,20 +27,24 @@ const Login = () => {
   const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/[^0-9]/g, '').slice(0, 4);
     setCode(value);
+    setError('');
   };
 
   const handleKeypadPress = (digit: string) => {
     if (code.length < 4) {
       setCode(prev => prev + digit);
+      setError('');
     }
   };
 
   const handleBackspace = () => {
     setCode(prev => prev.slice(0, -1));
+    setError('');
   };
 
   const handleClear = () => {
     setCode('');
+    setError('');
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
