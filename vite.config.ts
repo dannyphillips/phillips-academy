@@ -57,4 +57,10 @@ export default defineConfig({
       }
     })
   ],
+  define: {
+    'process.env': process.env
+  },
+  resolve: {
+    extensions: ['.js', '.ts', '.jsx', '.tsx']
+  }
 })
