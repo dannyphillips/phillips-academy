@@ -454,7 +454,7 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
                           ...prev, 
                           icon: iconName
                         }))}
-                        className={`p-2 rounded hover:bg-farmhouse-cream/50 ${
+                        className={`p-2 rounded hover:bg-farmhouse-cream/50 flex items-center justify-center ${
                           editingTask.icon === iconName ? 'bg-farmhouse-cream' : ''
                         }`}
                         title={name}

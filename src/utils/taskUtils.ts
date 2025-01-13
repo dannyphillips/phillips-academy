@@ -1,4 +1,4 @@
-import { Child, Task, UniqueTask } from '../types/types';
+import { Child, Task, UniqueTask, IconName } from '../types/types';
 import { 
   SunIcon, MoonIcon, BookIcon, 
   PencilIcon, CalculatorIcon, GlobeIcon,
@@ -6,6 +6,7 @@ import {
   LucideIcon, CircleDotIcon
 } from 'lucide-react';
 import { TaskType } from '../constants/taskTypes';
+import { availableIcons } from '../data/taskTemplates';
 
 // Map task titles to icons and categories
 const taskMappings: Record<string, { icon: LucideIcon; category: TaskType }> = {
@@ -34,12 +35,20 @@ export function getAllUniqueTasks(children: Child[]): UniqueTask[] {
     child.tasks.forEach(task => {
       const key = task.title;
       if (!uniqueTasks.has(key)) {
+        // Get the icon from taskMappings if available, otherwise use the task's icon or CircleDot
+        const mapping = taskMappings[task.title];
+        const iconName = mapping 
+          ? (Object.entries(availableIcons).find(
+              ([_, component]) => component === mapping.icon
+            )?.[0] as IconName || 'CircleDot')
+          : (task.icon || 'CircleDot');
+
         uniqueTasks.set(key, {
           title: task.title,
           key,
           category: task.type,
           subject: task.title,
-          icon: task.icon || 'CircleDot',
+          icon: iconName,
           assignedToChildren: true
         });
       }
@@ -50,12 +59,17 @@ export function getAllUniqueTasks(children: Child[]): UniqueTask[] {
   Object.entries(taskMappings).forEach(([title, mapping]) => {
     const key = title;
     if (!uniqueTasks.has(key)) {
+      // Find the icon name by looking up the component in availableIcons
+      const iconName = Object.entries(availableIcons).find(
+        ([_, component]) => component === mapping.icon
+      )?.[0] as IconName || 'CircleDot';
+
       uniqueTasks.set(key, {
         title,
         key,
         category: mapping.category,
         subject: title,
-        icon: 'CircleDot',
+        icon: iconName,
         assignedToChildren: false
       });
     }

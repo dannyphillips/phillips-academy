@@ -6,7 +6,7 @@ import { colors } from '../constants/colors';
 interface ChildModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (child: Omit<Child, 'id' | 'tasks' | 'totalPoints'>) => void;
+  onSave: (child: Omit<Child, 'id' | 'tasks'>) => void;
   child?: Child;
 }
 
@@ -14,16 +14,19 @@ export function ChildModal({ isOpen, onClose, onSave, child }: ChildModalProps) 
   const [name, setName] = useState('');
   const [age, setAge] = useState('');
   const [color, setColor] = useState(colors[0].value);
+  const [points, setPoints] = useState('0');
 
   useEffect(() => {
     if (child) {
       setName(child.name);
       setAge(child.age.toString());
       setColor(child.color);
+      setPoints(child.totalPoints.toString());
     } else {
       setName('');
       setAge('');
       setColor(colors[0].value);
+      setPoints('0');
     }
   }, [child, isOpen]);
 
@@ -32,11 +35,13 @@ export function ChildModal({ isOpen, onClose, onSave, child }: ChildModalProps) 
     onSave({
       name,
       age: parseInt(age),
-      color
+      color,
+      totalPoints: parseInt(points)
     });
     setName('');
     setAge('');
     setColor(colors[0].value);
+    setPoints('0');
     onClose();
   };
 
@@ -85,6 +90,21 @@ export function ChildModal({ isOpen, onClose, onSave, child }: ChildModalProps) 
               onChange={(e) => setAge(e.target.value)}
               className="input-field"
               placeholder="Enter age"
+            />
+          </div>
+          <div>
+            <label htmlFor="points" className="block text-sm font-medium text-farmhouse-navy mb-1">
+              Points
+            </label>
+            <input
+              id="points"
+              type="number"
+              required
+              min="0"
+              value={points}
+              onChange={(e) => setPoints(e.target.value)}
+              className="input-field"
+              placeholder="Enter points"
             />
           </div>
           <div>

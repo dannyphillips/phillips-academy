@@ -5,6 +5,8 @@ import { getAllUniqueTasks, getColorClasses } from '../utils/taskUtils';
 import { TASK_TYPES } from '../constants/taskTypes';
 import { ChildToggle } from './ChildToggle';
 import { TaskGroup } from './TaskGroup';
+import { availableIcons } from '../data/taskTemplates';
+import React from 'react';
 
 interface ParentWeekViewProps {
   children: Child[];
@@ -79,7 +81,9 @@ export function ParentWeekView({ children, setChildren, daysOfWeek, currentDay, 
                     >
                       <div className="text-sm flex items-center gap-3">
                         <div className="text-farmhouse-brown">
-                          <task.icon className="w-4 h-4" />
+                          {React.createElement(availableIcons[task.icon], {
+                            className: "w-4 h-4"
+                          })}
                         </div>
                         <div>
                           <div className="font-medium text-farmhouse-navy">
