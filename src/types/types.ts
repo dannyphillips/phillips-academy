@@ -46,7 +46,7 @@ export interface UniqueTask {
 }
 
 // New types for Firestore
-export interface FirestoreTask extends Omit<Task, 'id'> {
+export interface FirestoreTask extends Omit<Task, 'id' | 'icon'> {
   id: string;        // Firestore IDs are strings
   childId: string;   // Add this to link tasks to children
   type: 'morning_routine' | 'evening_routine' | 'learning_task' | 'extra_task';

@@ -10,9 +10,12 @@ import {
   DocumentReference,
   CollectionReference,
   addDoc,
-  deleteDoc
+  deleteDoc,
+  getDoc,
+  increment
 } from 'firebase/firestore';
 import { Child, Task, FirestoreChild, FirestoreTask } from '../types/types';
+import { getTaskMapping } from '../utils/taskUtils';
 
 // Collections
 const CHILDREN_COLLECTION = 'children';
@@ -29,15 +32,19 @@ const convertFirestoreDataToChild = async (
     age: childDoc.age,
     color: childDoc.color,
     totalPoints: childDoc.totalPoints,
-    tasks: tasksSnapshot.map(task => ({
-      id: task.id,
-      title: task.title,
-      completed: task.completed,
-      streak: task.streak,
-      points: task.points,
-      days: task.days,
-      type: task.type
-    }))
+    tasks: tasksSnapshot.map(task => {
+      const mapping = getTaskMapping(task.title);
+      return {
+        id: task.id,
+        title: task.title,
+        completed: task.completed,
+        streak: task.streak,
+        points: task.points,
+        days: task.days,
+        type: task.type,
+        icon: mapping.icon
+      };
+    })
   };
 };
 
@@ -54,22 +61,19 @@ export async function getChildren(): Promise<Child[]> {
       const tasksSnapshot = await getDocs(collection(db, 'tasks'));
       const tasks = tasksSnapshot.docs
         .map(taskDoc => {
-          const task = taskDoc.data();
+          const task = taskDoc.data() as FirestoreTask;
           return task.childId === doc.id ? {
-            id: taskDoc.id,
-            ...task
+            ...task,
+            id: taskDoc.id
           } : null;
         })
-        .filter((task): task is Task => task !== null);
+        .filter((task): task is FirestoreTask => task !== null);
 
-      children.push({
-        id: doc.id,
-        name: childData.name,
-        age: childData.age,
-        color: childData.color,
-        totalPoints: childData.totalPoints,
+      const child = await convertFirestoreDataToChild(
+        { ...childData, id: doc.id },
         tasks
-      });
+      );
+      children.push(child);
     }
 
     return children;
@@ -88,21 +92,19 @@ export const updateTaskCompletion = async (
   points: number
 ): Promise<void> => {
   try {
-    const taskRef = doc(db, TASKS_COLLECTION, taskId);
-    await updateDoc(taskRef, {
-      completed,
-      streak,
-      points
-    });
-
-    // Update child's total points
-    const childRef = doc(db, CHILDREN_COLLECTION, childId);
-    const childSnapshot = await getDocs(query(collection(db, CHILDREN_COLLECTION), where('id', '==', childId)));
-    const childData = childSnapshot.docs[0].data() as FirestoreChild;
-
-    await updateDoc(childRef, {
-      totalPoints: childData.totalPoints + (completed ? points : -points)
-    });
+    // Update both documents in parallel
+    await Promise.all([
+      // Update task completion
+      updateDoc(doc(db, TASKS_COLLECTION, taskId), {
+        completed,
+        streak,
+        points
+      }),
+      // Update child points using increment
+      updateDoc(doc(db, CHILDREN_COLLECTION, childId), {
+        totalPoints: increment(completed ? points : -points)
+      })
+    ]);
   } catch (error) {
     console.error('Error updating task:', error);
     throw error;
@@ -128,10 +130,12 @@ export const addTask = async (childId: string, task: Omit<Task, 'id'>): Promise<
     };
 
     await setDoc(doc(tasksRef, newId), newTask);
+    const mapping = getTaskMapping(task.title);
 
     return {
       ...task,
-      id: newId
+      id: newId,
+      icon: mapping.icon
     };
   } catch (error) {
     console.error('Error adding task:', error);

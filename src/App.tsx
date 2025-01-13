@@ -39,7 +39,7 @@ export function App() {
     loadChildren();
   }, []);
 
-  const handleTaskComplete = async (childId: number, taskId: number) => {
+  const handleTaskComplete = async (childId: string, taskId: string) => {
     const child = children.find(c => c.id === childId);
     const task = child?.tasks.find(t => t.id === taskId);
     
@@ -49,33 +49,36 @@ export function App() {
     const newStreak = newCompleted ? task.streak + 1 : 0;
     const newPoints = newCompleted ? task.points + task.streak * 2 : task.points;
 
+    // Optimistically update the UI
+    const updatedChildren = children.map((c) =>
+      c.id === childId
+        ? {
+            ...c,
+            tasks: c.tasks.map((t) =>
+              t.id === taskId
+                ? {
+                    ...t,
+                    completed: newCompleted,
+                    streak: newStreak,
+                    points: newPoints,
+                  }
+                : t
+            ),
+            totalPoints: newCompleted
+              ? c.totalPoints + newPoints
+              : c.totalPoints - task.points,
+          }
+        : c
+    );
+    setChildren(updatedChildren);
+
     try {
+      // Make the database update in the background
       await updateTaskCompletion(childId, taskId, newCompleted, newStreak, newPoints);
-      
-      setChildren(
-        children.map((c) =>
-          c.id === childId
-            ? {
-                ...c,
-                tasks: c.tasks.map((t) =>
-                  t.id === taskId
-                    ? {
-                        ...t,
-                        completed: newCompleted,
-                        streak: newStreak,
-                        points: newPoints,
-                      }
-                    : t
-                ),
-                totalPoints: newCompleted
-                  ? c.totalPoints + newPoints
-                  : c.totalPoints,
-              }
-            : c
-        )
-      );
     } catch (error) {
       console.error('Error updating task:', error);
+      // Revert to the previous state if the update fails
+      setChildren(children);
     }
   };
 
