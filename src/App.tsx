@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Lock, LockOpen, CalendarDays, ListTodo } from "lucide-react";
+import { Lock, LockOpen, CalendarDays, ListTodo, Loader2 } from "lucide-react";
 import { Child } from "./types/types";
 import { ChildDayView } from "./components/ChildDayView";
 import { ChildWeekView } from "./components/ChildWeekView";
@@ -89,7 +89,11 @@ export function App() {
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-farmhouse-cream">
+        <Loader2 className="w-16 h-16 text-farmhouse-clay animate-spin opacity-80" />
+      </div>
+    );
   }
 
   return (

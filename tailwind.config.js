@@ -25,11 +25,15 @@ export default {
           beige: '#E6DFD3',
           brown: '#786F69',
           accent: '#D4B595'
-        }
+        },
+        'farmhouse-cream': '#F5F1EA',
       },
       borderRadius: {
         'lg': '0.75rem',
       },
+      animation: {
+        'spin-slow': 'spin 3s linear infinite',
+      }
     },
   },
   plugins: [],

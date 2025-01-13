@@ -5,7 +5,7 @@ import fs from 'fs'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  base: '/phillips-academy/',
+  base: '/phillips-academy',
   publicDir: 'public',
   build: {
     outDir: 'dist',
