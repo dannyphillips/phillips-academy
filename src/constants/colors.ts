@@ -8,7 +8,7 @@ export const colors: ColorOption[] = [
   // Earthy & Muted Colors
   { name: 'Sage', value: 'sage', class: 'bg-[#87A878]' },        // Muted green
   { name: 'Clay', value: 'clay', class: 'bg-[#B47E5F]' },        // Warm terracotta
-  { name: 'Navy', value: 'navy', class: 'bg-[#34435E]' },        // Deep navy
+  { name: 'Teal', value: 'teal', class: 'bg-[#4A7B7C]' },        // Deep teal
   { name: 'Dusty Blue', value: 'dusty-blue', class: 'bg-[#8BA0B5]' }, // Muted blue
   { name: 'Moss', value: 'moss', class: 'bg-[#6B7F59]' },        // Deep sage
   { name: 'Stone', value: 'stone', class: 'bg-[#8F8B83]' },      // Warm gray

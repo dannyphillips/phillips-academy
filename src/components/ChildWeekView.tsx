@@ -37,7 +37,6 @@ export function ChildWeekView({ children, handleTaskComplete, daysOfWeek, curren
           <ChildToggle
             key={child.id}
             child={child}
-            onEdit={() => {}} // No edit in child view
             isVisible={visibleChildren.includes(child.id)}
             onToggleVisibility={toggleChildVisibility}
             showStats={true}

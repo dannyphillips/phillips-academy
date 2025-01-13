@@ -35,12 +35,11 @@ export function ChildDayView({
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {children.map((child, index) => (
           <ChildToggle
             key={child.id}
             child={child}
-            onEdit={() => {}} // No edit in child view
             isVisible={index === activeChild}
             onToggleVisibility={() => setActiveChild(index)}
             showStats={true}

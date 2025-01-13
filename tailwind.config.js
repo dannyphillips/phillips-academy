@@ -10,7 +10,7 @@ export default {
         'farmhouse': {
           sage: '#87A878',
           clay: '#B47E5F',
-          navy: '#34435E',
+          teal: '#4A7B7C',
           'dusty-blue': '#8BA0B5',
           moss: '#6B7F59',
           stone: '#8F8B83',
@@ -24,7 +24,8 @@ export default {
           cream: '#EAE1D0',
           beige: '#E6DFD3',
           brown: '#786F69',
-          accent: '#D4B595'
+          accent: '#D4B595',
+          navy: '#34435E'
         },
         'farmhouse-cream': '#F5F1EA',
       },
