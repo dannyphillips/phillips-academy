@@ -32,19 +32,17 @@ const convertFirestoreDataToChild = async (
     age: childDoc.age,
     color: childDoc.color,
     totalPoints: childDoc.totalPoints,
-    tasks: tasksSnapshot.map(task => {
-      const mapping = getTaskMapping(task.title);
-      return {
-        id: task.id,
-        title: task.title,
-        completed: task.completed,
-        streak: task.streak,
-        points: task.points,
-        days: task.days,
-        type: task.type,
-        icon: mapping.icon
-      };
-    })
+    tasks: tasksSnapshot.map(task => ({
+      id: task.id,
+      title: task.title,
+      completed: task.completed,
+      streak: task.streak,
+      points: task.points,
+      days: task.days,
+      type: task.type,
+      icon: task.icon,
+      completions: task.completions || {}
+    }))
   };
 };
 
@@ -119,28 +117,39 @@ export const updateTaskCompletion = async (
 export const addTask = async (childId: string, task: Omit<Task, 'id'>): Promise<Task> => {
   try {
     const tasksRef = collection(db, TASKS_COLLECTION);
-    const taskSnapshot = await getDocs(tasksRef);
-    const newId = (taskSnapshot.size + 1).toString();
+    const newTaskRef = doc(tasksRef); // Let Firestore generate the ID
 
-    const newTask: FirestoreTask = {
+    // Create a clean object with only primitive values and arrays
+    const firestoreData = {
       title: task.title,
-      completed: task.completed,
-      streak: task.streak,
-      points: task.points,
-      days: task.days,
+      completed: false,
+      streak: task.streak || 0,
+      points: task.points || 1,
+      days: Array.isArray(task.days) ? task.days : [],
       type: task.type,
-      id: newId,
-      childId: childId
+      id: newTaskRef.id,
+      childId: childId,
+      icon: task.icon, // icon is already an IconName string
+      completions: {}
     };
 
-    await setDoc(doc(tasksRef, newId), newTask);
-    const mapping = getTaskMapping(task.title);
+    // First create the document with the basic data
+    await setDoc(newTaskRef, firestoreData);
 
-    return {
-      ...task,
-      id: newId,
-      icon: mapping.icon
+    // Return a properly structured Task object
+    const newTask: Task = {
+      id: newTaskRef.id,
+      title: task.title,
+      completed: false,
+      streak: task.streak || 0,
+      points: task.points || 1,
+      days: Array.isArray(task.days) ? task.days : [],
+      type: task.type,
+      icon: task.icon, // icon is already an IconName string
+      completions: {}
     };
+
+    return newTask;
   } catch (error) {
     console.error('Error adding task:', error);
     throw error;
@@ -233,7 +242,7 @@ export async function deleteTask(childId: string, taskId: string) {
 export async function updateTask(
   childId: string,
   taskId: string,
-  updates: Partial<Omit<Task, 'id' | 'icon'>>
+  updates: Partial<Omit<Task, 'id'>>
 ): Promise<void> {
   try {
     const taskRef = doc(db, TASKS_COLLECTION, taskId);

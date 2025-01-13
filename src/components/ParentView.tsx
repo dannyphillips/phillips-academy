@@ -130,11 +130,12 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
         );
       } else if (taskEditor.task) {
         // Handle task update
-        const updates: Partial<Omit<Task, 'id' | 'icon'>> = {
+        const updates: Partial<Omit<Task, 'id'>> = {
           title: editingTask.title,
           points: editingTask.points || 1,
           days: editingTask.days || [],
-          type: editingTask.type || 'learning_task'
+          type: editingTask.type || 'learning_task',
+          icon: editingTask.icon
         };
 
         // Find all children who currently have this task
@@ -181,7 +182,11 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
           });
 
         // Wait for all operations to complete
-        await Promise.all([...removePromises, ...updatePromises, ...addPromises]);
+        const [, , addedTasks] = await Promise.all([
+          Promise.all(removePromises),
+          Promise.all(updatePromises),
+          Promise.all(addPromises)
+        ]);
 
         // Update local state
         setChildren(prevChildren =>
@@ -211,19 +216,15 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
             }
             
             // Add new task if child is newly selected
-            return {
-              ...child,
-              tasks: [...child.tasks, {
-                id: Date.now().toString(), // Temporary ID until we get the real one from the server
-                title: editingTask.title!,
-                completed: false,
-                streak: 0,
-                points: editingTask.points || 1,
-                days: editingTask.days || [],
-                type: editingTask.type || 'learning_task',
-                icon: editingTask.icon!
-              }]
-            };
+            const addedTask = addedTasks[selectedChildren.indexOf(child.id)];
+            if (addedTask) {
+              return {
+                ...child,
+                tasks: [...child.tasks, addedTask]
+              };
+            }
+
+            return child;
           })
         );
       }

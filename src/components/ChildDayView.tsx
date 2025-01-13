@@ -1,9 +1,11 @@
+import React from 'react';
 import { Check, Flame, Trophy } from 'lucide-react';
 import { Child } from '../types/types';
 import { getColorClasses } from '../utils/taskUtils';
 import { TASK_TYPES, getTaskTypeDisplayName, TaskType } from '../constants/taskTypes';
 import { ChildToggle } from './ChildToggle';
 import { TaskGroup } from './TaskGroup';
+import { availableIcons } from '../data/taskTemplates';
 
 interface ChildDayViewProps {
   children: Child[];
@@ -89,7 +91,9 @@ export function ChildDayView({
                       </button>
                       <div className="flex-grow flex items-center gap-3">
                         <div className="text-farmhouse-brown">
-                          <Icon className="w-5 h-5" />
+                          {React.createElement(availableIcons[task.icon], {
+                            className: "w-5 h-5"
+                          })}
                         </div>
                         <div>
                           <h3 className="font-medium text-farmhouse-navy">

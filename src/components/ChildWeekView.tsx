@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState } from 'react';
 import { Check } from 'lucide-react';
 import { Child } from '../types/types';
@@ -5,6 +6,7 @@ import { getColorClasses } from '../utils/taskUtils';
 import { TASK_TYPES } from '../constants/taskTypes';
 import { ChildToggle } from './ChildToggle';
 import { TaskGroup } from './TaskGroup';
+import { availableIcons } from '../data/taskTemplates';
 
 interface ChildWeekViewProps {
   children: Child[];
@@ -75,7 +77,9 @@ export function ChildWeekView({ children, handleTaskComplete, daysOfWeek, curren
                       >
                         <div className="text-sm flex items-center gap-3">
                           <div className="text-farmhouse-brown">
-                            <task.icon className="w-4 h-4" />
+                            {React.createElement(availableIcons[task.icon], {
+                              className: "w-4 h-4"
+                            })}
                           </div>
                           <div>
                             <div className="font-medium text-farmhouse-navy">
