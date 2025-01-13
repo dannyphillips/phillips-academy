@@ -10,11 +10,12 @@ export interface TaskDetail {
 export interface Task {
   id: string;
   title: string;
-  completed: boolean;
+  completed?: boolean;
+  completions?: Record<string, boolean>;
   streak: number;
   points: number;
   days: number[];
-  type: 'morning_routine' | 'evening_routine' | 'learning_task' | 'extra_task';
+  type: string;
   icon: LucideIcon;
 }
 

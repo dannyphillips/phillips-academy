@@ -10,7 +10,7 @@ interface ChildDayViewProps {
   selectedDay: number;
   setSelectedDay: (day: number) => void;
   daysOfWeek: string[];
-  handleTaskComplete: (childId: string, taskId: string) => void;
+  handleTaskComplete: (childId: string, taskId: string, day: number) => void;
 }
 
 export function ChildDayView({
@@ -43,6 +43,7 @@ export function ChildDayView({
             isVisible={index === activeChild}
             onToggleVisibility={() => setActiveChild(index)}
             showStats={true}
+            selectedDay={selectedDay}
           />
         ))}
       </div>
@@ -74,12 +75,12 @@ export function ChildDayView({
               >
                 <div className="flex items-center gap-4">
                   <button
-                    onClick={() => handleTaskComplete(currentChild.id, task.id)}
+                    onClick={() => handleTaskComplete(currentChild.id, task.id, selectedDay)}
                     className={`task-button ${
-                      task.completed ? `${colors.bg} text-white` : 'task-button-incomplete'
+                      task.completions?.[`${task.id}-${selectedDay}`] ? `${colors.bg} text-white` : 'task-button-incomplete'
                     }`}
                   >
-                    {task.completed && <Check className="w-4 h-4" />}
+                    {task.completions?.[`${task.id}-${selectedDay}`] && <Check className="w-4 h-4" />}
                   </button>
                   <div className="flex-grow flex items-center gap-3">
                     <div className="text-farmhouse-brown">

@@ -89,14 +89,18 @@ export const updateTaskCompletion = async (
   taskId: string,
   completed: boolean,
   streak: number,
-  points: number
+  points: number,
+  dayIndex: number
 ): Promise<void> => {
   try {
+    const taskRef = doc(db, TASKS_COLLECTION, taskId);
+    const completionKey = `${taskId}-${dayIndex}`;
+
     // Update both documents in parallel
     await Promise.all([
       // Update task completion
-      updateDoc(doc(db, TASKS_COLLECTION, taskId), {
-        completed,
+      updateDoc(taskRef, {
+        [`completions.${completionKey}`]: completed,
         streak,
         points
       }),

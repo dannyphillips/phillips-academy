@@ -6,7 +6,7 @@ import { ChildToggle } from './ChildToggle';
 
 interface ChildWeekViewProps {
   children: Child[];
-  handleTaskComplete: (childId: string, taskId: string) => void;
+  handleTaskComplete: (childId: string, taskId: string, dayIndex: number) => void;
   daysOfWeek: string[];
   currentDay: number;
 }
@@ -104,14 +104,14 @@ export function ChildWeekView({ children, handleTaskComplete, daysOfWeek, curren
                                 key={child.id}
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleTaskComplete(child.id, childTask.id);
+                                  handleTaskComplete(child.id, childTask.id, dayIndex);
                                 }}
                                 className={`w-6 h-6 rounded-full border-2 transition-all 
-                                  ${childTask.completed ? `${childColors.bg} border-transparent` : 'bg-white border-gray-200'}
+                                  ${childTask.completions?.[`${childTask.id}-${dayIndex}`] ? `${childColors.bg} border-transparent` : 'bg-white border-gray-200'}
                                   hover:shadow-md`}
-                                title={`${child.name} - ${childTask.completed ? "Completed" : "Incomplete"}`}
+                                title={`${child.name} - ${childTask.completions?.[`${childTask.id}-${dayIndex}`] ? "Completed" : "Incomplete"}`}
                               >
-                                {childTask.completed && (
+                                {childTask.completions?.[`${childTask.id}-${dayIndex}`] && (
                                   <Check className="w-3 h-3 text-white" />
                                 )}
                               </button>

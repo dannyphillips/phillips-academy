@@ -39,15 +39,20 @@ export function App() {
     loadChildren();
   }, []);
 
-  const handleTaskComplete = async (childId: string, taskId: string) => {
+  const handleTaskComplete = async (childId: string, taskId: string, dayIndex: number) => {
     const child = children.find(c => c.id === childId);
     const task = child?.tasks.find(t => t.id === taskId);
     
     if (!child || !task) return;
 
-    const newCompleted = !task.completed;
+    // Get the current completion state for this specific day
+    const completionKey = `${taskId}-${dayIndex}`;
+    const isCurrentlyCompleted = task.completions?.[completionKey] || false;
+    const newCompleted = !isCurrentlyCompleted;
+
+    // Calculate streak and points
     const newStreak = newCompleted ? task.streak + 1 : 0;
-    const newPoints = newCompleted ? task.points + task.streak * 2 : task.points;
+    const basePoints = task.points;
 
     // Optimistically update the UI
     const updatedChildren = children.map((c) =>
@@ -58,15 +63,20 @@ export function App() {
               t.id === taskId
                 ? {
                     ...t,
-                    completed: newCompleted,
+                    // Track both daily completion and today's completion status
+                    completed: dayIndex === currentDay ? newCompleted : t.completed,
+                    completions: {
+                      ...(t.completions || {}),
+                      [completionKey]: newCompleted
+                    },
                     streak: newStreak,
-                    points: newPoints,
+                    points: basePoints,
                   }
                 : t
             ),
             totalPoints: newCompleted
-              ? c.totalPoints + newPoints
-              : c.totalPoints - task.points,
+              ? c.totalPoints + basePoints
+              : c.totalPoints - basePoints,
           }
         : c
     );
@@ -74,7 +84,7 @@ export function App() {
 
     try {
       // Make the database update in the background
-      await updateTaskCompletion(childId, taskId, newCompleted, newStreak, newPoints);
+      await updateTaskCompletion(childId, taskId, newCompleted, newStreak, basePoints, dayIndex);
     } catch (error) {
       console.error('Error updating task:', error);
       // Revert to the previous state if the update fails

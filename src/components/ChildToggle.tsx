@@ -8,6 +8,7 @@ interface ChildToggleProps {
   isVisible?: boolean;
   onToggleVisibility?: (childId: string) => void;
   showStats?: boolean;
+  selectedDay?: number;
 }
 
 export function ChildToggle({ 
@@ -15,11 +16,12 @@ export function ChildToggle({
   onEdit, 
   isVisible = true, 
   onToggleVisibility,
-  showStats = true 
+  showStats = true,
+  selectedDay = new Date().getDay()
 }: ChildToggleProps) {
   const colors = getColorClasses(child.color || 'blue');
-  const completedTasks = child.tasks.filter(t => t.completed).length;
-  const totalTasks = child.tasks.length;
+  const completedTasks = child.tasks.filter(t => t.completions?.[`${t.id}-${selectedDay}`]).length;
+  const totalTasks = child.tasks.filter(t => t.days.includes(selectedDay)).length;
 
   const content = (
     <div className="flex flex-col w-full p-3 gap-2">
