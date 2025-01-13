@@ -21,6 +21,7 @@ import {
   FirestoreTaskDefinition,
   FirestoreTaskAssignment
 } from '../types/types';
+import { taskTemplates } from '../data/taskTemplates';
 
 // Collections
 const CHILDREN_COLLECTION = 'children';
@@ -291,6 +292,29 @@ export async function deleteChild(childId: string): Promise<void> {
     await batch.commit();
   } catch (error) {
     console.error('Error deleting child:', error);
+    throw error;
+  }
+}
+
+export async function initializeTaskDefinitions(): Promise<void> {
+  try {
+    const batch = writeBatch(db);
+    const existingDefs = await getTaskDefinitions();
+    
+    // Only add templates that don't already exist (matching by title)
+    const existingTitles = new Set(existingDefs.map(def => def.title));
+    
+    Object.values(taskTemplates).flat().forEach(template => {
+      if (!existingTitles.has(template.title)) {
+        const definitionRef = doc(collection(db, TASK_DEFINITIONS_COLLECTION));
+        batch.set(definitionRef, template);
+      }
+    });
+
+    await batch.commit();
+    console.log('Task definitions initialized successfully');
+  } catch (error) {
+    console.error('Error initializing task definitions:', error);
     throw error;
   }
 } 

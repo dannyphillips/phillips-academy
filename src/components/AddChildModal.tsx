@@ -19,7 +19,8 @@ export function AddChildModal({ isOpen, onClose, onSave }: AddChildModalProps) {
     onSave({
       name,
       age: parseInt(age),
-      color
+      color,
+      taskAssignments: [] // Add missing required property
     });
     setName('');
     setAge('');

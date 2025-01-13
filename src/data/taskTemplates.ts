@@ -1,4 +1,4 @@
-import { Task, IconName } from '../types/types';
+import { IconName, TaskDefinition } from '../types/types';
 import type { LucideIcon } from 'lucide-react';
 import { 
   Sun, Moon, Book, Pencil, Calculator, Globe,
@@ -8,19 +8,19 @@ import {
   Footprints, ShoppingBag, BookOpen
 } from 'lucide-react';
 
-export interface TaskTemplate extends Omit<Task, 'id' | 'completed' | 'streak'> {
+export interface TaskTemplateDefinition extends Omit<TaskDefinition, 'id'> {
   title: string;
-  points: number;
-  days: number[];
-  type: Task['type'];
+  type: TaskDefinition['type'];
   icon: IconName;
+  defaultPoints: number;
+  defaultDays: number[];
 }
 
 interface TaskTemplatesByType {
-  morning_routine: TaskTemplate[];
-  evening_routine: TaskTemplate[];
-  learning_task: TaskTemplate[];
-  extra_task: TaskTemplate[];
+  morning_routine: TaskTemplateDefinition[];
+  evening_routine: TaskTemplateDefinition[];
+  learning_task: TaskTemplateDefinition[];
+  extra_task: TaskTemplateDefinition[];
 }
 
 export const availableIcons = {
@@ -54,22 +54,22 @@ export const taskTemplates: TaskTemplatesByType = {
   morning_routine: [
     {
       title: "Brush teeth",
-      points: 10,
-      days: [0, 1, 2, 3, 4, 5, 6],
+      defaultPoints: 10,
+      defaultDays: [0, 1, 2, 3, 4, 5, 6],
       type: 'morning_routine',
       icon: "Smile"
     },
     {
       title: "Make bed",
-      points: 10,
-      days: [0, 1, 2, 3, 4, 5, 6],
+      defaultPoints: 10,
+      defaultDays: [0, 1, 2, 3, 4, 5, 6],
       type: 'morning_routine',
       icon: "Bed"
     },
     {
       title: "Get dressed",
-      points: 10,
-      days: [0, 1, 2, 3, 4, 5, 6],
+      defaultPoints: 10,
+      defaultDays: [0, 1, 2, 3, 4, 5, 6],
       type: 'morning_routine',
       icon: "Shirt"
     }
@@ -77,29 +77,29 @@ export const taskTemplates: TaskTemplatesByType = {
   evening_routine: [
     {
       title: "Brush teeth",
-      points: 10,
-      days: [0, 1, 2, 3, 4, 5, 6],
+      defaultPoints: 10,
+      defaultDays: [0, 1, 2, 3, 4, 5, 6],
       type: 'evening_routine',
       icon: "Smile"
     },
     {
       title: "Take shower",
-      points: 10,
-      days: [0, 1, 2, 3, 4, 5, 6],
+      defaultPoints: 10,
+      defaultDays: [0, 1, 2, 3, 4, 5, 6],
       type: 'evening_routine',
       icon: "ShowerHead"
     },
     {
       title: "Pick out clothes",
-      points: 10,
-      days: [0, 1, 2, 3, 4, 5, 6],
+      defaultPoints: 10,
+      defaultDays: [0, 1, 2, 3, 4, 5, 6],
       type: 'evening_routine',
       icon: "Star"
     },
     {
       title: "Put on pajamas",
-      points: 10,
-      days: [0, 1, 2, 3, 4, 5, 6],
+      defaultPoints: 10,
+      defaultDays: [0, 1, 2, 3, 4, 5, 6],
       type: 'evening_routine',
       icon: "Shirt"
     }
@@ -107,40 +107,40 @@ export const taskTemplates: TaskTemplatesByType = {
   learning_task: [
     {
       title: "Math practice",
-      points: 20,
-      days: [1, 2, 3, 4, 5],
+      defaultPoints: 20,
+      defaultDays: [1, 2, 3, 4, 5],
       type: 'learning_task',
       icon: "Calculator"
     },
     {
       title: "Reading time",
-      points: 20,
-      days: [1, 2, 3, 4, 5],
+      defaultPoints: 20,
+      defaultDays: [1, 2, 3, 4, 5],
       type: 'learning_task',
       icon: "BookOpen"
-    }
-  ],
-  extra_task: [
+    },
     {
       title: "Art project",
-      points: 15,
-      days: [0, 1, 2, 3, 4, 5, 6],
+      defaultPoints: 15,
+      defaultDays: [0, 1, 2, 3, 4, 5, 6],
       type: 'extra_task',
       icon: "Palette"
     },
     {
       title: "Music practice",
-      points: 15,
-      days: [0, 1, 2, 3, 4, 5, 6],
+      defaultPoints: 15,
+      defaultDays: [0, 1, 2, 3, 4, 5, 6],
       type: 'extra_task',
       icon: "Music"
     },
     {
       title: "Geography study",
-      points: 15,
-      days: [0, 1, 2, 3, 4, 5, 6],
+      defaultPoints: 15,
+      defaultDays: [0, 1, 2, 3, 4, 5, 6],
       type: 'extra_task',
       icon: "Globe"
     }
+  ],
+  extra_task: [
   ]
 }; 
