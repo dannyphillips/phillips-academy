@@ -1,6 +1,7 @@
-import { Trophy, Check, Flame } from 'lucide-react';
+import { Check, Flame, Trophy } from 'lucide-react';
 import { Child } from '../types/types';
 import { getColorClasses, getTaskMapping } from '../utils/taskUtils';
+import { ChildToggle } from './ChildToggle';
 
 interface ChildDayViewProps {
   children: Child[];
@@ -9,7 +10,7 @@ interface ChildDayViewProps {
   selectedDay: number;
   setSelectedDay: (day: number) => void;
   daysOfWeek: string[];
-  handleTaskComplete: (childId: number, taskId: number) => void;
+  handleTaskComplete: (childId: string, taskId: string) => void;
 }
 
 export function ChildDayView({
@@ -34,28 +35,17 @@ export function ChildDayView({
 
   return (
     <div className="space-y-6">
-      <div className="flex gap-2 flex-wrap">
-        {children.map((child, index) => {
-          const childColors = getColorClasses(child.color || 'blue');
-          const isActive = index === activeChild;
-          return (
-            <button
-              key={child.id}
-              onClick={() => setActiveChild(index)}
-              className={`px-4 py-2 rounded-lg transition-all flex items-center gap-3 border-2 ${
-                isActive ? `${childColors.bg} border-transparent` : childColors.muted
-              }`}
-            >
-              <span className={isActive ? 'text-white' : ''}>
-                {child.name}
-              </span>
-              <div className={`flex items-center gap-1 ${isActive ? 'text-white/90' : ''}`}>
-                <Trophy className="w-4 h-4" />
-                <span className="font-medium">{child.totalPoints}</span>
-              </div>
-            </button>
-          );
-        })}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {children.map((child, index) => (
+          <ChildToggle
+            key={child.id}
+            child={child}
+            onEdit={() => {}} // No edit in child view
+            isVisible={index === activeChild}
+            onToggleVisibility={() => setActiveChild(index)}
+            showStats={true}
+          />
+        ))}
       </div>
 
       <div className="flex gap-2">
@@ -94,7 +84,7 @@ export function ChildDayView({
                   </button>
                   <div className="flex-grow flex items-center gap-3">
                     <div className="text-farmhouse-brown">
-                      <Icon size={20} />
+                      <Icon className="w-5 h-5" />
                     </div>
                     <div>
                       <h3 className="font-medium text-farmhouse-navy">

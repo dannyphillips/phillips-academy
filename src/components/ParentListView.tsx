@@ -1,6 +1,7 @@
-import { Plus, Edit2, Trophy } from 'lucide-react';
+import { Plus, Edit2 } from 'lucide-react';
 import { Child, Task, UniqueTask } from '../types/types';
 import { getAllUniqueTasks, getColorClasses } from '../utils/taskUtils';
+import { ChildToggle } from './ChildToggle';
 
 interface ParentListViewProps {
   children: Child[];
@@ -17,41 +18,13 @@ export function ParentListView({ children, openTaskEditor, onEditChild }: Parent
     <div className="space-y-6">
       {/* Child List */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {children.map((child) => {
-          const colors = getColorClasses(child.color || 'blue');
-          const completedTasks = child.tasks.filter(t => t.completed).length;
-          const totalTasks = child.tasks.length;
-          
-          return (
-            <div
-              key={child.id}
-              className={`${colors.bg} rounded-lg p-4 text-white shadow-md hover:shadow-lg transition-shadow`}
-            >
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h3 className="text-xl font-bold">{child.name}</h3>
-                  <p className="text-white/80 text-sm">Age {child.age}</p>
-                </div>
-                <button
-                  onClick={() => onEditChild(child)}
-                  className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
-                >
-                  <Edit2 className="w-4 h-4" />
-                </button>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Trophy className="w-5 h-5" />
-                  <span className="font-semibold">{child.totalPoints} points</span>
-                </div>
-                <div className="text-sm text-white/80">
-                  {completedTasks}/{totalTasks} tasks completed
-                </div>
-              </div>
-            </div>
-          );
-        })}
+        {children.map((child) => (
+          <ChildToggle
+            key={child.id}
+            child={child}
+            onEdit={onEditChild}
+          />
+        ))}
       </div>
 
       {/* Tasks Section */}
@@ -78,7 +51,7 @@ export function ParentListView({ children, openTaskEditor, onEditChild }: Parent
                   >
                     <div className="flex-grow flex items-center gap-3">
                       <div className="text-farmhouse-brown">
-                        <task.icon size={20} />
+                        <task.icon className="w-5 h-5" />
                       </div>
                       <div>
                         <h3 className="font-medium text-farmhouse-navy">

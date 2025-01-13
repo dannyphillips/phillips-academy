@@ -102,18 +102,21 @@ export function App() {
         <div className="flex flex-col gap-6">
           <div className="flex justify-between items-center">
             <img 
-              src="/phillips-academy/assets/logo.png" 
+              src="/phillips-academy/assets/logo-circle-crop.png" 
               alt="Phillips Homeschool Academy" 
               className="h-24 w-auto object-contain"
             />
             {/* Lock Toggle */}
             <button
               onClick={handleLockClick}
-              className={`nav-toggle !px-3 ${isParentUser() ? 'nav-toggle-active' : ''}`}
+              className={`nav-toggle !px-3 flex items-center gap-2 ${isParentUser() ? 'nav-toggle-active' : ''}`}
               title={isParentUser() ? "Parent Mode (Click to Logout)" : "Kid Mode (Click to Logout)"}
             >
               {isParentUser() ? (
-                <LockOpen className="w-5 h-5" />
+                <>
+                  <LockOpen className="w-5 h-5" />
+                  <span>Parent Mode</span>
+                </>
               ) : (
                 <Lock className="w-5 h-5" />
               )}
@@ -128,7 +131,7 @@ export function App() {
                 className={`nav-toggle ${view === 'day' ? 'nav-toggle-active' : ''}`}
               >
                 <ListTodo className="w-4 h-4" />
-                Day View
+                List View
               </button>
               <button
                 onClick={() => setView('week')}

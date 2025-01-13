@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Trophy, Check } from 'lucide-react';
 import { Child, UniqueTask } from '../types/types';
 import { getAllUniqueTasks, getColorClasses } from '../utils/taskUtils';
+import { ChildToggle } from './ChildToggle';
 
 interface ChildWeekViewProps {
   children: Child[];
@@ -31,28 +32,17 @@ export function ChildWeekView({ children, handleTaskComplete, daysOfWeek, curren
       <header className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-farmhouse-navy">Family Weekly Schedule</h1>
       </header>
-      <div className="flex gap-4 items-center flex-wrap">
-        {children.map((child) => {
-          const childColors = getColorClasses(child.color);
-          const isVisible = visibleChildren.includes(child.id);
-          return (
-            <button
-              key={child.id}
-              onClick={() => toggleChildVisibility(child.id)}
-              className={`px-4 py-2 rounded-lg transition-all flex items-center gap-3 border-2 ${
-                isVisible ? `${childColors.bg} border-transparent` : childColors.muted
-              }`}
-            >
-              <span className={isVisible ? 'text-white' : ''}>
-                {child.name}
-              </span>
-              <div className={`flex items-center gap-1 ${isVisible ? 'text-white/90' : ''}`}>
-                <Trophy className="w-4 h-4" />
-                <span className="font-medium">{child.totalPoints}</span>
-              </div>
-            </button>
-          );
-        })}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {children.map((child) => (
+          <ChildToggle
+            key={child.id}
+            child={child}
+            onEdit={() => {}} // No edit in child view
+            isVisible={visibleChildren.includes(child.id)}
+            onToggleVisibility={toggleChildVisibility}
+            showStats={true}
+          />
+        ))}
       </div>
 
       <div className="overflow-x-auto">

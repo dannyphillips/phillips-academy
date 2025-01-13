@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Plus, Trophy, Edit2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { Child, Task, UniqueTask } from '../types/types';
 import { getAllUniqueTasks, getColorClasses } from '../utils/taskUtils';
+import { ChildToggle } from './ChildToggle';
 
 interface ParentWeekViewProps {
   children: Child[];
@@ -40,41 +41,16 @@ export function ParentWeekView({ children, setChildren, daysOfWeek, currentDay, 
         </button>
       </header>
 
-      <div className="flex gap-4 items-center flex-wrap">
-        {children.map((child) => {
-          const childColors = getColorClasses(child.color || 'blue');
-          const isVisible = visibleChildren.includes(child.id);
-          return (
-            <div
-              key={child.id}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all border-2 ${
-                isVisible ? `${childColors.bg} border-transparent` : childColors.muted
-              }`}
-            >
-              <button
-                onClick={() => toggleChildVisibility(child.id)}
-                className="flex items-center gap-2"
-              >
-                <span className={isVisible ? 'text-white' : ''}>
-                  {child.name}
-                </span>
-                <div className={`flex items-center gap-1 ${isVisible ? 'text-white/90' : ''}`}>
-                  <Trophy className="w-4 h-4" />
-                  <span className="font-medium">{child.totalPoints}</span>
-                </div>
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEditChild(child);
-                }}
-                className="p-1 text-farmhouse-brown hover:text-farmhouse-navy rounded-full hover:bg-farmhouse-beige/50"
-              >
-                <Edit2 className="w-4 h-4" />
-              </button>
-            </div>
-          );
-        })}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {children.map((child) => (
+          <ChildToggle
+            key={child.id}
+            child={child}
+            onEdit={onEditChild}
+            isVisible={visibleChildren.includes(child.id)}
+            onToggleVisibility={toggleChildVisibility}
+          />
+        ))}
       </div>
 
       <div className="overflow-x-auto">
