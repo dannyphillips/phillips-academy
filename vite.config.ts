@@ -11,6 +11,7 @@ export default defineConfig({
     outDir: 'dist',
     emptyOutDir: true,
     assetsDir: 'assets',
+    chunkSizeWarningLimit: 1000
   },
   plugins: [
     react(),

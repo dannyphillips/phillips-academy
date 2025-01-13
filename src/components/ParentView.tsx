@@ -433,7 +433,7 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
                                 onClick={() => handleTemplateSelect(template)}
                               >
                                 <div className="flex items-center gap-2">
-                                  {React.createElement(template.icon, {
+                                  {React.createElement(availableIcons[template.icon], {
                                     className: "w-4 h-4 text-farmhouse-brown"
                                   })}
                                   <div className="font-medium text-farmhouse-navy">
