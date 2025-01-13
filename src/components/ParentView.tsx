@@ -71,13 +71,11 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
       isNew: !task,
     });
     if (task) {
+      const childrenWithTask = children.filter(child =>
+        child.tasks.some(t => t.title === task.title)
+      );
       setEditingTask(task);
       setSearchQuery(task.title);
-      // Find all children who have this task assigned
-      const childrenWithTask = children.filter(child =>
-        child.tasks.some(t => t.id === task.id)
-      );
-      // Set selectedChildren to their IDs
       setSelectedChildren(childrenWithTask.map(child => child.id));
     } else {
       setEditingTask({
@@ -98,136 +96,135 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
     if (!editingTask.title || !editingTask.icon) return;
 
     try {
+      // Prepare the task data
+      const taskData = {
+        title: editingTask.title,
+        completed: false,
+        streak: 0,
+        points: editingTask.points || 1,
+        days: editingTask.days || [],
+        type: editingTask.type || 'learning_task',
+        icon: editingTask.icon
+      };
+
+      // Find all children who currently have this task
+      const childrenWithTask = taskEditor.task 
+        ? children.filter(child => 
+            child.tasks.some(t => t.title === taskEditor.task?.title)
+          )
+        : [];
+
+      // Optimistically update UI first
+      setChildren(prevChildren =>
+        prevChildren.map(child => {
+          // If child is no longer selected, remove the task
+          if (!selectedChildren.includes(child.id)) {
+            return {
+              ...child,
+              tasks: child.tasks.filter(t => 
+                taskEditor.task ? t.title !== taskEditor.task.title : true
+              )
+            };
+          }
+          
+          // If child already had the task, update it
+          if (childrenWithTask.some(c => c.id === child.id)) {
+            return {
+              ...child,
+              tasks: child.tasks.map(t =>
+                taskEditor.task && t.title === taskEditor.task.title
+                  ? { ...t, ...taskData }
+                  : t
+              )
+            };
+          }
+          
+          // If child is newly selected, add the task (with a temporary ID)
+          if (selectedChildren.includes(child.id)) {
+            const tempTask = {
+              ...taskData,
+              id: `temp-${child.id}-${Date.now()}`,
+            };
+            return {
+              ...child,
+              tasks: [...child.tasks, tempTask]
+            };
+          }
+
+          return child;
+        })
+      );
+
+      // Prepare all database operations
+      const operations = [];
+
       if (taskEditor.isNew) {
-        // Handle new task creation
-        if (selectedChildren.length === 0) return;
-        
-        const savePromises = selectedChildren.map(childId => {
-          const newTask: Omit<Task, 'id'> = {
-            title: editingTask.title!,
-            completed: false,
-            streak: 0,
-            points: editingTask.points || 1,
-            days: editingTask.days || [],
-            type: editingTask.type || 'learning_task',
-            icon: editingTask.icon!
-          };
-          return addTask(childId, newTask);
-        });
-
-        const savedTasks = await Promise.all(savePromises);
-
-        // Update local state for new tasks
-        setChildren(prevChildren => 
-          prevChildren.map(child => 
-            selectedChildren.includes(child.id)
-              ? {
-                  ...child,
-                  tasks: [...child.tasks, savedTasks[selectedChildren.indexOf(child.id)]]
-                }
-              : child
+        // Add task to selected children
+        operations.push(
+          ...selectedChildren.map(childId => 
+            addTask(childId, taskData)
           )
         );
       } else if (taskEditor.task) {
-        // Handle task update
-        const updates: Partial<Omit<Task, 'id'>> = {
-          title: editingTask.title,
-          points: editingTask.points || 1,
-          days: editingTask.days || [],
-          type: editingTask.type || 'learning_task',
-          icon: editingTask.icon
-        };
-
-        // Find all children who currently have this task
-        const childrenWithTask = children.filter(child => 
-          child.tasks.some(t => t.id === taskEditor.task?.id)
+        // Remove task from unselected children
+        operations.push(
+          ...childrenWithTask
+            .filter(child => !selectedChildren.includes(child.id))
+            .map(child => {
+              const taskToRemove = child.tasks.find(t => t.title === taskEditor.task?.title);
+              return taskToRemove ? deleteTask(child.id, taskToRemove.id) : Promise.resolve();
+            })
         );
 
-        // Remove task from children who are no longer selected
-        const removePromises = childrenWithTask
-          .filter(child => !selectedChildren.includes(child.id))
-          .map(child => {
-            const taskToRemove = child.tasks.find(t => t.id === taskEditor.task?.id);
-            if (taskToRemove) {
-              return deleteTask(child.id, taskToRemove.id);
-            }
-            return Promise.resolve();
-          });
-
-        // Update task for currently selected children who already have it
-        const updatePromises = childrenWithTask
-          .filter(child => selectedChildren.includes(child.id))
-          .map(child => {
-            const taskToUpdate = child.tasks.find(t => t.id === taskEditor.task?.id);
-            if (taskToUpdate) {
-              return updateTask(child.id, taskToUpdate.id, updates);
-            }
-            return Promise.resolve();
-          });
+        // Update task for existing assignments
+        operations.push(
+          ...childrenWithTask
+            .filter(child => selectedChildren.includes(child.id))
+            .map(child => {
+              const taskToUpdate = child.tasks.find(t => t.title === taskEditor.task?.title);
+              return taskToUpdate ? updateTask(child.id, taskToUpdate.id, taskData) : Promise.resolve();
+            })
+        );
 
         // Add task to newly selected children
-        const addPromises = selectedChildren
-          .filter(childId => !childrenWithTask.some(c => c.id === childId))
-          .map(childId => {
-            const newTask: Omit<Task, 'id'> = {
-              title: editingTask.title!,
-              completed: false,
-              streak: 0,
-              points: editingTask.points || 1,
-              days: editingTask.days || [],
-              type: editingTask.type || 'learning_task',
-              icon: editingTask.icon!
-            };
-            return addTask(childId, newTask);
-          });
-
-        // Wait for all operations to complete
-        const [, , addedTasks] = await Promise.all([
-          Promise.all(removePromises),
-          Promise.all(updatePromises),
-          Promise.all(addPromises)
-        ]);
-
-        // Update local state
-        setChildren(prevChildren =>
-          prevChildren.map(child => {
-            // Remove task if child is no longer selected
-            if (!selectedChildren.includes(child.id)) {
-              return {
-                ...child,
-                tasks: child.tasks.filter(t => t.id !== taskEditor.task?.id)
-              };
-            }
-            
-            // Update existing task if child already had it
-            if (childrenWithTask.some(c => c.id === child.id)) {
-              return {
-                ...child,
-                tasks: child.tasks.map(t =>
-                  t.id === taskEditor.task?.id
-                    ? {
-                        ...t,
-                        ...updates,
-                        icon: editingTask.icon!
-                      }
-                    : t
-                )
-              };
-            }
-            
-            // Add new task if child is newly selected
-            const addedTask = addedTasks[selectedChildren.indexOf(child.id)];
-            if (addedTask) {
-              return {
-                ...child,
-                tasks: [...child.tasks, addedTask]
-              };
-            }
-
-            return child;
-          })
+        operations.push(
+          ...selectedChildren
+            .filter(childId => !childrenWithTask.some(c => c.id === childId))
+            .map(childId => addTask(childId, taskData))
         );
       }
+
+      // Execute all operations concurrently
+      const results = await Promise.all(operations);
+
+      // Update UI with actual server data
+      setChildren(prevChildren =>
+        prevChildren.map(child => {
+          // Find any new or updated tasks for this child
+          const validResults = results.filter((result): result is Task => 
+            result !== undefined && 
+            result !== null && 
+            typeof result === 'object' && 
+            'childId' in result && 
+            result.childId === child.id
+          );
+
+          return {
+            ...child,
+            tasks: child.tasks
+              // Remove temporary tasks and tasks that were unassigned
+              .filter(t => {
+                const wasUnassigned = taskEditor.task && 
+                  t.title === taskEditor.task.title && 
+                  !selectedChildren.includes(child.id);
+                const isTemp = t.id.startsWith('temp-');
+                return !isTemp && !wasUnassigned;
+              })
+              // Add newly created or updated tasks
+              .concat(validResults)
+          };
+        })
+      );
 
       // Reset editor state
       setTaskEditor({ isOpen: false, isNew: true });
@@ -235,6 +232,10 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
       setSelectedChildren([]);
     } catch (error) {
       console.error('Error saving task:', error);
+      // Revert optimistic update on error by refetching data
+      // You would need to implement a refetch function
+      // For now, we'll just show an error
+      alert('Error saving task. Please try again.');
     }
   };
 
