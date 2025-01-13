@@ -1,7 +1,9 @@
 import { Check, Flame, Trophy } from 'lucide-react';
 import { Child } from '../types/types';
-import { getColorClasses, getTaskMapping } from '../utils/taskUtils';
+import { getColorClasses } from '../utils/taskUtils';
+import { TASK_TYPES, getTaskTypeDisplayName, TaskType } from '../constants/taskTypes';
 import { ChildToggle } from './ChildToggle';
+import { TaskGroup } from './TaskGroup';
 
 interface ChildDayViewProps {
   children: Child[];
@@ -32,13 +34,6 @@ export function ChildDayView({
   }
 
   const colors = getColorClasses(currentChild.color || 'blue');
-  const taskTypes = ['morning_routine', 'evening_routine', 'learning_task', 'extra_task'];
-
-  const getTaskTypeDisplayName = (type: string) => {
-    return type.split('_')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-  };
 
   return (
     <div className="space-y-6">
@@ -70,17 +65,12 @@ export function ChildDayView({
       </div>
 
       <div className="space-y-4">
-        {taskTypes.map(type => {
+        {TASK_TYPES.map(type => {
           const tasksOfType = currentChild.tasks
             .filter(task => task.type === type && task.days.includes(selectedDay));
-          
-          if (tasksOfType.length === 0) return null;
 
           return (
-            <div key={type} className="space-y-2">
-              <h2 className="text-xl font-semibold text-farmhouse-navy">
-                {getTaskTypeDisplayName(type)}
-              </h2>
+            <TaskGroup key={type} type={type}>
               {tasksOfType.map((task) => {
                 const Icon = task.icon;
                 return (
@@ -105,6 +95,9 @@ export function ChildDayView({
                           <h3 className="font-medium text-farmhouse-navy">
                             {task.title}
                           </h3>
+                          <p className="text-sm text-farmhouse-brown">
+                            {getTaskTypeDisplayName(task.type as TaskType)}
+                          </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2 text-farmhouse-brown">
@@ -123,7 +116,7 @@ export function ChildDayView({
                   </div>
                 );
               })}
-            </div>
+            </TaskGroup>
           );
         })}
       </div>

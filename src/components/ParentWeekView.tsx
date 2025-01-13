@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import { Child, Task, UniqueTask } from '../types/types';
 import { getAllUniqueTasks, getColorClasses } from '../utils/taskUtils';
+import { TASK_TYPES } from '../constants/taskTypes';
 import { ChildToggle } from './ChildToggle';
+import { TaskGroup } from './TaskGroup';
 
 interface ParentWeekViewProps {
   children: Child[];
@@ -15,7 +17,6 @@ interface ParentWeekViewProps {
 
 export function ParentWeekView({ children, setChildren, daysOfWeek, currentDay, openTaskEditor, onEditChild }: ParentWeekViewProps) {
   const allTasks = getAllUniqueTasks(children) as UniqueTask[];
-  const taskTypes = ['morning_routine', 'evening_routine', 'learning_task', 'extra_task'];
   const [visibleChildren, setVisibleChildren] = useState<string[]>(
     children.map((child) => child.id)
   );
@@ -26,12 +27,6 @@ export function ParentWeekView({ children, setChildren, daysOfWeek, currentDay, 
         ? prev.filter((id) => id !== childId)
         : [...prev, childId]
     );
-  };
-
-  const getTaskTypeDisplayName = (type: string) => {
-    return type.split('_')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
   };
 
   return (
@@ -73,11 +68,8 @@ export function ParentWeekView({ children, setChildren, daysOfWeek, currentDay, 
             ))}
           </div>
           <div className="space-y-6">
-            {taskTypes.map((type) => (
-              <div key={`type-${type}`} className="space-y-2">
-                <h3 className="text-lg font-semibold text-farmhouse-navy mb-3">
-                  {getTaskTypeDisplayName(type)}
-                </h3>
+            {TASK_TYPES.map((type) => (
+              <TaskGroup key={type} type={type} className="space-y-2">
                 {allTasks
                   .filter((task) => task.category === type)
                   .map((task) => (
@@ -154,7 +146,7 @@ export function ParentWeekView({ children, setChildren, daysOfWeek, currentDay, 
                       ))}
                     </div>
                   ))}
-              </div>
+              </TaskGroup>
             ))}
           </div>
         </div>

@@ -1,28 +1,29 @@
 import { Child, Task, UniqueTask } from '../types/types';
 import { 
-  Sun, Moon, Book, 
-  Pencil, Calculator, Globe,
-  Music, Palette, Dumbbell,
+  SunIcon, MoonIcon, BookIcon, 
+  PencilIcon, CalculatorIcon, GlobeIcon,
+  MusicIcon, PaletteIcon, DumbbellIcon,
   LucideIcon
 } from 'lucide-react';
+import { TaskType } from '../constants/taskTypes';
 
 // Map task titles to icons and categories
-const taskMappings: Record<string, { icon: LucideIcon; category: string }> = {
-  'Brush Teeth': { icon: Sun, category: 'Morning Routine' },
-  'Make Bed': { icon: Sun, category: 'Morning Routine' },
-  'Get Dressed': { icon: Sun, category: 'Morning Routine' },
-  'Shower': { icon: Moon, category: 'Evening Routine' },
-  'Math Practice': { icon: Calculator, category: 'academic' },
-  'Reading': { icon: Book, category: 'academic' },
-  'Writing': { icon: Pencil, category: 'academic' },
-  'Geography': { icon: Globe, category: 'academic' },
-  'Music Practice': { icon: Music, category: 'academic' },
-  'Art': { icon: Palette, category: 'academic' },
-  'Exercise': { icon: Dumbbell, category: 'academic' }
+const taskMappings: Record<string, { icon: LucideIcon; category: TaskType }> = {
+  'Brush Teeth': { icon: SunIcon, category: 'morning_routine' },
+  'Make Bed': { icon: SunIcon, category: 'morning_routine' },
+  'Get Dressed': { icon: SunIcon, category: 'morning_routine' },
+  'Shower': { icon: MoonIcon, category: 'evening_routine' },
+  'Math Practice': { icon: CalculatorIcon, category: 'learning_task' },
+  'Reading': { icon: BookIcon, category: 'learning_task' },
+  'Writing': { icon: PencilIcon, category: 'learning_task' },
+  'Geography': { icon: GlobeIcon, category: 'learning_task' },
+  'Music Practice': { icon: MusicIcon, category: 'learning_task' },
+  'Art': { icon: PaletteIcon, category: 'learning_task' },
+  'Exercise': { icon: DumbbellIcon, category: 'learning_task' }
 };
 
 export function getTaskMapping(title: string) {
-  return taskMappings[title] || { icon: Book, category: 'academic' };
+  return taskMappings[title] || { icon: BookIcon, category: 'learning_task' };
 }
 
 export function getAllUniqueTasks(children: Child[]): UniqueTask[] {

@@ -1,24 +1,18 @@
-import { Plus, Edit2 } from 'lucide-react';
+import { Edit2 } from 'lucide-react';
 import { Child, Task, UniqueTask } from '../types/types';
 import { getAllUniqueTasks, getColorClasses } from '../utils/taskUtils';
+import { TASK_TYPES } from '../constants/taskTypes';
 import { ChildToggle } from './ChildToggle';
+import { TaskGroup } from './TaskGroup';
 
 interface ParentListViewProps {
   children: Child[];
-  setChildren: React.Dispatch<React.SetStateAction<Child[]>>;
   openTaskEditor: (task?: Task) => void;
   onEditChild: (child: Child) => void;
 }
 
 export function ParentListView({ children, openTaskEditor, onEditChild }: ParentListViewProps) {
   const allTasks = getAllUniqueTasks(children) as UniqueTask[];
-  const taskTypes = ['morning_routine', 'evening_routine', 'learning_task', 'extra_task'];
-
-  const getTaskTypeDisplayName = (type: string) => {
-    return type.split('_')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-  };
 
   return (
     <div className="space-y-6">
@@ -34,11 +28,8 @@ export function ParentListView({ children, openTaskEditor, onEditChild }: Parent
       </div>
 
       {/* Tasks Section */}
-      {taskTypes.map((type) => (
-        <div key={type} className="space-y-4">
-          <h2 className="text-xl font-semibold text-farmhouse-navy">
-            {getTaskTypeDisplayName(type)}
-          </h2>
+      {TASK_TYPES.map((type) => (
+        <TaskGroup key={type} type={type} className="space-y-4">
           <div className="bg-white rounded-lg border border-farmhouse-beige divide-y divide-farmhouse-beige">
             {allTasks
               .filter((task) => task.category === type)
@@ -95,7 +86,7 @@ export function ParentListView({ children, openTaskEditor, onEditChild }: Parent
                 );
               })}
           </div>
-        </div>
+        </TaskGroup>
       ))}
     </div>
   );

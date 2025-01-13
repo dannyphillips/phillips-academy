@@ -1,12 +1,14 @@
 import { useState } from 'react';
-import { Trophy, Check } from 'lucide-react';
-import { Child, UniqueTask } from '../types/types';
-import { getAllUniqueTasks, getColorClasses } from '../utils/taskUtils';
+import { Check } from 'lucide-react';
+import { Child } from '../types/types';
+import { getColorClasses } from '../utils/taskUtils';
+import { TASK_TYPES } from '../constants/taskTypes';
 import { ChildToggle } from './ChildToggle';
+import { TaskGroup } from './TaskGroup';
 
 interface ChildWeekViewProps {
   children: Child[];
-  handleTaskComplete: (childId: string, taskId: string, dayIndex: number) => void;
+  handleTaskComplete: (childId: string, taskId: string, day: number) => void;
   daysOfWeek: string[];
   currentDay: number;
 }
@@ -23,9 +25,6 @@ export function ChildWeekView({ children, handleTaskComplete, daysOfWeek, curren
         : [...prev, childId]
     );
   };
-
-  const allTasks = getAllUniqueTasks(children) as UniqueTask[];
-  const categories = ["Morning Routine", "Evening Routine", "academic"];
 
   return (
     <div className="space-y-8">
@@ -58,71 +57,57 @@ export function ChildWeekView({ children, handleTaskComplete, daysOfWeek, curren
             ))}
           </div>
           <div className="space-y-6">
-            {categories.map((category) => (
-              <div key={category} className="space-y-2">
-                <h3 className="text-lg font-semibold text-farmhouse-navy mb-3">
-                  {category === "academic" ? "Learning Tasks" : category}
-                </h3>
-                {allTasks
-                  .filter((task) => 
-                    category === "academic" 
-                      ? task.category === "academic"
-                      : task.category === "routine" && task.subject === category
-                  )
-                  .map((task) => (
-                    <div
-                      key={task.key}
-                      className="grid grid-cols-8 gap-2 bg-white rounded-lg p-3 items-center border border-farmhouse-beige hover:shadow-md transition-all"
-                    >
-                      <div className="text-sm flex items-center gap-3">
-                        <div className="text-farmhouse-brown">
-                          <task.icon className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <div className="font-medium text-farmhouse-navy">
-                            {task.title}
+            {TASK_TYPES.map(type => {
+              const tasksOfType = children.flatMap(child => 
+                child.tasks
+                  .filter(task => task.type === type)
+                  .map(task => ({ task, child }))
+              );
+
+              return (
+                <TaskGroup key={type} type={type}>
+                  {tasksOfType.map(({ task, child }) => {
+                    const colors = getColorClasses(child.color || 'blue');
+                    return (
+                      <div
+                        key={`${child.id}-${task.id}`}
+                        className="grid grid-cols-8 gap-2 bg-white rounded-lg p-3 items-center border border-farmhouse-beige hover:shadow-md transition-all"
+                      >
+                        <div className="text-sm flex items-center gap-3">
+                          <div className="text-farmhouse-brown">
+                            <task.icon className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <div className="font-medium text-farmhouse-navy">
+                              {task.title}
+                            </div>
+                            <div className="text-xs text-farmhouse-brown">
+                              {child.name}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      {[...Array(7)].map((_, dayIndex) => (
-                        <div
-                          key={dayIndex}
-                          className="flex flex-wrap justify-center gap-1 p-1"
-                        >
-                          {children.map((child) => {
-                            if (!visibleChildren.includes(child.id)) return null;
-                            const childTask = child.tasks.find(
-                              (t) =>
-                                t.type === task.category &&
-                                t.title === task.title &&
-                                t.days.includes(dayIndex)
-                            );
-                            if (!childTask) return null;
-                            const childColors = getColorClasses(child.color);
-                            return (
+                        {[...Array(7)].map((_, dayIndex) => (
+                          <div
+                            key={dayIndex}
+                            className="flex justify-center"
+                          >
+                            {task.days.includes(dayIndex) && (
                               <button
-                                key={child.id}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleTaskComplete(child.id, childTask.id, dayIndex);
-                                }}
-                                className={`w-6 h-6 rounded-full border-2 transition-all 
-                                  ${childTask.completions?.[`${childTask.id}-${dayIndex}`] ? `${childColors.bg} border-transparent` : 'bg-white border-gray-200'}
-                                  hover:shadow-md`}
-                                title={`${child.name} - ${childTask.completions?.[`${childTask.id}-${dayIndex}`] ? "Completed" : "Incomplete"}`}
+                                onClick={() => handleTaskComplete(child.id, task.id, dayIndex)}
+                                className={`w-6 h-6 rounded-full flex items-center justify-center transition-all
+                                  ${task.completions?.[`${task.id}-${dayIndex}`] ? `${colors.bg} text-white` : 'bg-white border-2 ' + colors.muted}`}
                               >
-                                {childTask.completions?.[`${childTask.id}-${dayIndex}`] && (
-                                  <Check className="w-3 h-3 text-white" />
-                                )}
+                                {task.completions?.[`${task.id}-${dayIndex}`] && <Check className="w-3 h-3" />}
                               </button>
-                            );
-                          })}
-                        </div>
-                      ))}
-                    </div>
-                  ))}
-              </div>
-            ))}
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })}
+                </TaskGroup>
+              );
+            })}
           </div>
         </div>
       </div>

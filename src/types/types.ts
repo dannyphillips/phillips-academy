@@ -1,5 +1,6 @@
 import { ReactElement } from 'react';
 import { LucideIcon } from 'lucide-react';
+import { TaskType } from '../constants/taskTypes';
 
 export interface TaskDetail {
   pages?: string;
@@ -15,7 +16,7 @@ export interface Task {
   streak: number;
   points: number;
   days: number[];
-  type: string;
+  type: TaskType;
   icon: LucideIcon;
 }
 
@@ -39,7 +40,7 @@ export interface EditingTask extends Partial<Task> {
 }
 
 export interface UniqueTask {
-  category: string;
+  category: TaskType;
   subject: string;
   title: string;
   key: string;
@@ -50,7 +51,7 @@ export interface UniqueTask {
 export interface FirestoreTask extends Omit<Task, 'id' | 'icon'> {
   id: string;        // Firestore IDs are strings
   childId: string;   // Add this to link tasks to children
-  type: 'morning_routine' | 'evening_routine' | 'learning_task' | 'extra_task';
+  type: TaskType;
 }
 
 export interface FirestoreChild {

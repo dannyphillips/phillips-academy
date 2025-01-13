@@ -4,7 +4,6 @@ import { Child } from "./types/types";
 import { ChildDayView } from "./components/ChildDayView";
 import { ChildWeekView } from "./components/ChildWeekView";
 import { ParentView } from "./components/ParentView";
-import { initialChildren } from "./data/initialData";
 import { logout, isParentUser } from "./components/Auth";
 import { useNavigate } from "react-router-dom";
 import { getChildren, updateTaskCompletion } from "./services/database";
@@ -17,7 +16,7 @@ export function App() {
   // Child state
   const [activeChild, setActiveChild] = useState(0);
   const [selectedDay, setSelectedDay] = useState(new Date().getDay());
-  const [children, setChildren] = useState<Child[]>(initialChildren);
+  const [children, setChildren] = useState<Child[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Constants
