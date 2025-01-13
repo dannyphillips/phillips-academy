@@ -35,20 +35,12 @@ export function getAllUniqueTasks(children: Child[]): UniqueTask[] {
     child.tasks.forEach(task => {
       const key = task.title;
       if (!uniqueTasks.has(key)) {
-        // Get the icon from taskMappings if available, otherwise use the task's icon or CircleDot
-        const mapping = taskMappings[task.title];
-        const iconName = mapping 
-          ? (Object.entries(availableIcons).find(
-              ([_, component]) => component === mapping.icon
-            )?.[0] as IconName || 'CircleDot')
-          : (task.icon || 'CircleDot');
-
         uniqueTasks.set(key, {
           title: task.title,
           key,
           category: task.type,
           subject: task.title,
-          icon: iconName,
+          icon: task.icon || 'CircleDot', // Always use the task's icon from Firebase
           assignedToChildren: true
         });
       }
