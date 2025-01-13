@@ -58,57 +58,63 @@ export function ChildWeekView({ children, handleTaskComplete, daysOfWeek, curren
               </div>
             ))}
           </div>
+
           <div className="space-y-6">
             {TASK_TYPES.map(type => {
-              const tasksOfType = children.flatMap(child => 
-                child.tasks
-                  .filter(task => task.type === type)
-                  .map(task => ({ task, child }))
-              );
+              const tasksOfType = children
+                .filter(child => visibleChildren.includes(child.id))
+                .flatMap(child => 
+                  child.taskAssignments
+                    .filter(assignment => assignment.definition.type === type)
+                    .map(assignment => ({ assignment, child }))
+                );
 
               return (
                 <TaskGroup key={type} type={type}>
-                  {tasksOfType.map(({ task, child }) => {
-                    const colors = getColorClasses(child.color || 'blue');
-                    return (
-                      <div
-                        key={`${child.id}-${task.id}`}
-                        className="grid grid-cols-8 gap-2 bg-white rounded-lg p-3 items-center border border-farmhouse-beige hover:shadow-md transition-all"
-                      >
-                        <div className="text-sm flex items-center gap-3">
-                          <div className="text-farmhouse-brown">
-                            {React.createElement(availableIcons[task.icon], {
-                              className: "w-4 h-4"
-                            })}
-                          </div>
-                          <div>
-                            <div className="font-medium text-farmhouse-navy">
-                              {task.title}
+                  <div className="space-y-2">
+                    {tasksOfType.map(({ assignment, child }) => {
+                      const colors = getColorClasses(child.color || 'blue');
+                      const Icon = availableIcons[assignment.definition.icon];
+                      return (
+                        <div
+                          key={`${child.id}-${assignment.id}`}
+                          className="grid grid-cols-8 gap-2 bg-white rounded-lg p-3 items-center border border-farmhouse-beige hover:shadow-md transition-all"
+                        >
+                          <div className="text-sm flex items-center gap-3">
+                            <div className="text-farmhouse-brown">
+                              {React.createElement(Icon, {
+                                className: "w-4 h-4"
+                              })}
                             </div>
-                            <div className="text-xs text-farmhouse-brown">
-                              {child.name}
+                            <div>
+                              <div className="font-medium text-farmhouse-navy">
+                                {assignment.definition.title}
+                              </div>
+                              <div className="text-xs text-farmhouse-brown">
+                                {child.name}
+                              </div>
                             </div>
                           </div>
+                          {[...Array(7)].map((_, dayIndex) => (
+                            <div
+                              key={dayIndex}
+                              className="flex justify-center"
+                            >
+                              {assignment.days.includes(dayIndex) && (
+                                <button
+                                  onClick={() => handleTaskComplete(child.id, assignment.id, dayIndex)}
+                                  className={`w-6 h-6 rounded-full flex items-center justify-center transition-all
+                                    ${assignment.completions?.[`${assignment.id}-${dayIndex}`] ? `${colors.bg} text-white` : 'bg-white border-2 ' + colors.muted}`}
+                                >
+                                  {assignment.completions?.[`${assignment.id}-${dayIndex}`] && <Check className="w-3 h-3" />}
+                                </button>
+                              )}
+                            </div>
+                          ))}
                         </div>
-                        {[...Array(7)].map((_, dayIndex) => (
-                          <div
-                            key={dayIndex}
-                            className="flex justify-center"
-                          >
-                            {task.days.includes(dayIndex) && (
-                              <button
-                                onClick={() => handleTaskComplete(child.id, task.id, dayIndex)}
-                                className={`w-6 h-6 rounded-full flex items-center justify-center transition-all
-                                  ${task.completions?.[`${task.id}-${dayIndex}`] ? `${colors.bg} text-white` : 'bg-white border-2 ' + colors.muted}`}
-                              >
-                                {task.completions?.[`${task.id}-${dayIndex}`] && <Check className="w-3 h-3" />}
-                              </button>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </TaskGroup>
               );
             })}

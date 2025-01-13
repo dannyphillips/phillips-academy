@@ -68,58 +68,61 @@ export function ChildDayView({
 
       <div className="space-y-4">
         {TASK_TYPES.map(type => {
-          const tasksOfType = currentChild.tasks
-            .filter(task => task.type === type && task.days.includes(selectedDay));
+          const tasksOfType = currentChild.taskAssignments.filter(
+            assignment => assignment.definition.type === type && assignment.days.includes(selectedDay)
+          );
 
           return (
             <TaskGroup key={type} type={type}>
-              {tasksOfType.map((task) => {
-                const Icon = task.icon;
-                return (
-                  <div
-                    key={task.id}
-                    className="task-card"
-                  >
-                    <div className="flex items-center gap-4">
-                      <button
-                        onClick={() => handleTaskComplete(currentChild.id, task.id, selectedDay)}
-                        className={`task-button ${
-                          task.completions?.[`${task.id}-${selectedDay}`] ? `${colors.bg} text-white` : 'task-button-incomplete'
-                        }`}
-                      >
-                        {task.completions?.[`${task.id}-${selectedDay}`] && <Check className="w-4 h-4" />}
-                      </button>
-                      <div className="flex-grow flex items-center gap-3">
-                        <div className="text-farmhouse-brown">
-                          {React.createElement(availableIcons[task.icon], {
-                            className: "w-5 h-5"
-                          })}
-                        </div>
-                        <div>
-                          <h3 className="font-medium text-farmhouse-navy">
-                            {task.title}
-                          </h3>
-                          <p className="text-sm text-farmhouse-brown">
-                            {getTaskTypeDisplayName(task.type as TaskType)}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 text-farmhouse-brown">
-                        <div className="flex items-center gap-1">
-                          <Trophy className="w-4 h-4" />
-                          <span className="text-sm font-medium">{task.points}</span>
-                        </div>
-                        {task.streak > 0 && (
-                          <div className="flex items-center gap-1">
-                            <Flame className="w-4 h-4" />
-                            <span className="text-sm font-medium">{task.streak}</span>
+              <div className="space-y-2">
+                {tasksOfType.map((assignment) => {
+                  const Icon = availableIcons[assignment.definition.icon];
+                  return (
+                    <div
+                      key={assignment.id}
+                      className="task-card"
+                    >
+                      <div className="flex items-center gap-4">
+                        <button
+                          onClick={() => handleTaskComplete(currentChild.id, assignment.id, selectedDay)}
+                          className={`task-button ${
+                            assignment.completions?.[`${assignment.id}-${selectedDay}`] ? `${colors.bg} text-white` : 'task-button-incomplete'
+                          }`}
+                        >
+                          {assignment.completions?.[`${assignment.id}-${selectedDay}`] && <Check className="w-4 h-4" />}
+                        </button>
+                        <div className="flex-grow flex items-center gap-3">
+                          <div className="text-farmhouse-brown">
+                            {React.createElement(Icon, {
+                              className: "w-5 h-5"
+                            })}
                           </div>
-                        )}
+                          <div>
+                            <h3 className="font-medium text-farmhouse-navy">
+                              {assignment.definition.title}
+                            </h3>
+                            <p className="text-sm text-farmhouse-brown">
+                              {getTaskTypeDisplayName(assignment.definition.type)}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 text-farmhouse-brown">
+                          <div className="flex items-center gap-1">
+                            <Trophy className="w-4 h-4" />
+                            <span className="text-sm font-medium">{assignment.points}</span>
+                          </div>
+                          {assignment.streak > 0 && (
+                            <div className="flex items-center gap-1">
+                              <Flame className="w-4 h-4" />
+                              <span className="text-sm font-medium">{assignment.streak}</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </TaskGroup>
           );
         })}

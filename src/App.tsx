@@ -38,44 +38,41 @@ export function App() {
     loadChildren();
   }, []);
 
-  const handleTaskComplete = async (childId: string, taskId: string, dayIndex: number) => {
+  const handleTaskComplete = async (childId: string, assignmentId: string, dayIndex: number) => {
     const child = children.find(c => c.id === childId);
-    const task = child?.tasks.find(t => t.id === taskId);
+    const assignment = child?.taskAssignments.find(t => t.id === assignmentId);
     
-    if (!child || !task) return;
+    if (!child || !assignment) return;
 
     // Get the current completion state for this specific day
-    const completionKey = `${taskId}-${dayIndex}`;
-    const isCurrentlyCompleted = task.completions?.[completionKey] || false;
+    const completionKey = `${assignmentId}-${dayIndex}`;
+    const isCurrentlyCompleted = assignment.completions?.[completionKey] || false;
     const newCompleted = !isCurrentlyCompleted;
 
     // Calculate streak and points
-    const newStreak = newCompleted ? task.streak + 1 : 0;
-    const basePoints = task.points;
+    const newStreak = newCompleted ? assignment.streak + 1 : 0;
+    const points = assignment.points;
 
     // Optimistically update the UI
     const updatedChildren = children.map((c) =>
       c.id === childId
         ? {
             ...c,
-            tasks: c.tasks.map((t) =>
-              t.id === taskId
+            taskAssignments: c.taskAssignments.map((t) =>
+              t.id === assignmentId
                 ? {
                     ...t,
-                    // Track both daily completion and today's completion status
-                    completed: dayIndex === currentDay ? newCompleted : t.completed,
                     completions: {
                       ...(t.completions || {}),
                       [completionKey]: newCompleted
                     },
-                    streak: newStreak,
-                    points: basePoints,
+                    streak: newStreak
                   }
                 : t
             ),
             totalPoints: newCompleted
-              ? c.totalPoints + basePoints
-              : c.totalPoints - basePoints,
+              ? c.totalPoints + points
+              : c.totalPoints - points,
           }
         : c
     );
@@ -83,7 +80,7 @@ export function App() {
 
     try {
       // Make the database update in the background
-      await updateTaskCompletion(childId, taskId, newCompleted, newStreak, basePoints, dayIndex);
+      await updateTaskCompletion(assignmentId, newCompleted, newStreak, points, dayIndex);
     } catch (error) {
       console.error('Error updating task:', error);
       // Revert to the previous state if the update fails
