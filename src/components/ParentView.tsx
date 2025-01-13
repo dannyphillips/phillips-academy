@@ -5,8 +5,7 @@ import { Child, Task, TaskEditor, EditingTask } from '../types/types';
 import { ParentListView } from './ParentListView';
 import { ParentWeekView } from './ParentWeekView';
 import { addTask, addChild, updateChild, deleteChild } from '../services/database';
-import { AddChildModal } from './AddChildModal';
-import { EditChildModal } from './EditChildModal';
+import { ChildModal } from './ChildModal';
 import { taskTemplates, availableIcons, TaskTemplate } from '../data/taskTemplates';
 
 interface ParentViewProps {
@@ -23,7 +22,7 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
     isNew: true
   });
   const [editingTask, setEditingTask] = useState<EditingTask>({});
-  const [isAddChildModalOpen, setIsAddChildModalOpen] = useState(false);
+  const [isChildModalOpen, setIsChildModalOpen] = useState(false);
   const [editingChild, setEditingChild] = useState<Child | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -156,6 +155,25 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
     }
   };
 
+  const handleSaveChild = async (childData: Omit<Child, 'id' | 'tasks' | 'totalPoints'>) => {
+    try {
+      if (editingChild) {
+        await handleUpdateChild(editingChild.id, childData);
+      } else {
+        await handleAddChild(childData);
+      }
+      setIsChildModalOpen(false);
+      setEditingChild(null);
+    } catch (error) {
+      console.error('Error saving child:', error);
+    }
+  };
+
+  const openChildModal = (child?: Child) => {
+    setEditingChild(child || null);
+    setIsChildModalOpen(true);
+  };
+
   return (
     <>
       <div className="space-y-6">
@@ -163,7 +181,7 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
           <h1 className="text-3xl font-bold text-farmhouse-navy">Manage Agenda</h1>
           <div className="flex gap-2">
             <button
-              onClick={() => setIsAddChildModalOpen(true)}
+              onClick={() => openChildModal()}
               className="secondary-button"
             >
               Add Child
@@ -182,7 +200,7 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
             children={children}
             setChildren={setChildren}
             openTaskEditor={openTaskEditor}
-            onEditChild={setEditingChild}
+            onEditChild={openChildModal}
           />
         ) : (
           <ParentWeekView
@@ -190,16 +208,20 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
             setChildren={setChildren}
             daysOfWeek={daysOfWeek}
             currentDay={currentDay}
-            onEditChild={setEditingChild}
+            onEditChild={openChildModal}
             openTaskEditor={openTaskEditor}
           />
         )}
       </div>
 
-      <AddChildModal
-        isOpen={isAddChildModalOpen}
-        onClose={() => setIsAddChildModalOpen(false)}
-        onSave={handleAddChild}
+      <ChildModal
+        isOpen={isChildModalOpen}
+        onClose={() => {
+          setIsChildModalOpen(false);
+          setEditingChild(null);
+        }}
+        onSave={handleSaveChild}
+        child={editingChild || undefined}
       />
       
       {taskEditor.isOpen && (
@@ -431,26 +453,6 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
             </div>
           </div>
         </div>
-      )}
-
-      {editingChild && (
-        <EditChildModal
-          isOpen={!!editingChild}
-          onClose={() => setEditingChild(null)}
-          onSave={async (childId: string, updates) => {
-            await updateChild(childId, updates);
-            setChildren(prev => prev.map(child => 
-              child.id === childId 
-                ? { ...child, ...updates }
-                : child
-            ));
-          }}
-          onDelete={async (childId: string) => {
-            await deleteChild(childId);
-            setChildren(prev => prev.filter(child => child.id !== childId));
-          }}
-          child={editingChild}
-        />
       )}
     </>
   );

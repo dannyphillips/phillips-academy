@@ -50,13 +50,16 @@ export function getAllUniqueTasks(children: Child[]): UniqueTask[] {
 
 // Color utility functions
 const colorClasses: Record<string, { bg: string; muted: string }> = {
-  red: { bg: 'bg-red-500', muted: 'border-red-200 text-red-500' },
-  blue: { bg: 'bg-blue-500', muted: 'border-blue-200 text-blue-500' },
-  green: { bg: 'bg-green-500', muted: 'border-green-200 text-green-500' },
-  purple: { bg: 'bg-purple-500', muted: 'border-purple-200 text-purple-500' },
-  yellow: { bg: 'bg-yellow-500', muted: 'border-yellow-200 text-yellow-500' },
+  sage: { bg: 'bg-farmhouse-sage', muted: 'border-farmhouse-sage/30 text-farmhouse-sage' },
+  clay: { bg: 'bg-farmhouse-clay', muted: 'border-farmhouse-clay/30 text-farmhouse-clay' },
+  navy: { bg: 'bg-farmhouse-navy', muted: 'border-farmhouse-navy/30 text-farmhouse-navy' },
+  moss: { bg: 'bg-farmhouse-moss', muted: 'border-farmhouse-moss/30 text-farmhouse-moss' },
+  rust: { bg: 'bg-farmhouse-rust', muted: 'border-farmhouse-rust/30 text-farmhouse-rust' },
+  olive: { bg: 'bg-farmhouse-olive', muted: 'border-farmhouse-olive/30 text-farmhouse-olive' },
+  plum: { bg: 'bg-farmhouse-plum', muted: 'border-farmhouse-plum/30 text-farmhouse-plum' },
+  sienna: { bg: 'bg-farmhouse-sienna', muted: 'border-farmhouse-sienna/30 text-farmhouse-sienna' },
 };
 
 export function getColorClasses(color: string) {
-  return colorClasses[color] || colorClasses.blue;
+  return colorClasses[color] || colorClasses.clay;
 } 

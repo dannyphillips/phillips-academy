@@ -5,17 +5,17 @@ import { getAllUniqueTasks, getColorClasses } from '../utils/taskUtils';
 
 interface ChildWeekViewProps {
   children: Child[];
-  handleTaskComplete: (childId: number, taskId: number) => void;
+  handleTaskComplete: (childId: string, taskId: string) => void;
   daysOfWeek: string[];
   currentDay: number;
 }
 
 export function ChildWeekView({ children, handleTaskComplete, daysOfWeek, currentDay }: ChildWeekViewProps) {
-  const [visibleChildren, setVisibleChildren] = useState<number[]>(
+  const [visibleChildren, setVisibleChildren] = useState<string[]>(
     children.map((child) => child.id)
   );
 
-  const toggleChildVisibility = (childId: number) => {
+  const toggleChildVisibility = (childId: string) => {
     setVisibleChildren((prev) =>
       prev.includes(childId)
         ? prev.filter((id) => id !== childId)
@@ -87,7 +87,7 @@ export function ChildWeekView({ children, handleTaskComplete, daysOfWeek, curren
                     >
                       <div className="text-sm flex items-center gap-3">
                         <div className="text-farmhouse-brown">
-                          {task.icon}
+                          <task.icon className="w-4 h-4" />
                         </div>
                         <div>
                           <div className="font-medium text-farmhouse-navy">
@@ -104,9 +104,9 @@ export function ChildWeekView({ children, handleTaskComplete, daysOfWeek, curren
                             if (!visibleChildren.includes(child.id)) return null;
                             const childTask = child.tasks.find(
                               (t) =>
-                                t.subject === task.subject &&
+                                t.type === task.category &&
                                 t.title === task.title &&
-                                t.frequency.includes(dayIndex)
+                                t.days.includes(dayIndex)
                             );
                             if (!childTask) return null;
                             const childColors = getColorClasses(child.color);
@@ -118,7 +118,7 @@ export function ChildWeekView({ children, handleTaskComplete, daysOfWeek, curren
                                   handleTaskComplete(child.id, childTask.id);
                                 }}
                                 className={`w-6 h-6 rounded-full border-2 transition-all 
-                                  ${childTask.completed ? `${childColors.completed} border-transparent` : `${childColors.bg} border-transparent`}
+                                  ${childTask.completed ? `${childColors.bg} border-transparent` : 'bg-white border-gray-200'}
                                   hover:shadow-md`}
                                 title={`${child.name} - ${childTask.completed ? "Completed" : "Incomplete"}`}
                               >

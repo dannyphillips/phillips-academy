@@ -15,11 +15,11 @@ interface ParentWeekViewProps {
 export function ParentWeekView({ children, setChildren, daysOfWeek, currentDay, openTaskEditor, onEditChild }: ParentWeekViewProps) {
   const allTasks = getAllUniqueTasks(children) as UniqueTask[];
   const categories = ["Morning Routine", "Evening Routine", "academic"];
-  const [visibleChildren, setVisibleChildren] = useState<number[]>(
+  const [visibleChildren, setVisibleChildren] = useState<string[]>(
     children.map((child) => child.id)
   );
 
-  const toggleChildVisibility = (childId: number) => {
+  const toggleChildVisibility = (childId: string) => {
     setVisibleChildren((prev) =>
       prev.includes(childId)
         ? prev.filter((id) => id !== childId)
@@ -109,7 +109,7 @@ export function ParentWeekView({ children, setChildren, daysOfWeek, currentDay, 
                     >
                       <div className="text-sm flex items-center gap-3">
                         <div className="text-farmhouse-brown">
-                          {task.icon}
+                          <task.icon className="w-4 h-4" />
                         </div>
                         <div>
                           <div className="font-medium text-farmhouse-navy">
@@ -129,7 +129,7 @@ export function ParentWeekView({ children, setChildren, daysOfWeek, currentDay, 
                                 t.title === task.title
                             );
                             const isAssigned = childTask?.days.includes(dayIndex);
-                            const colors = getColorClasses(child.color || 'blue');
+                            const childColors = getColorClasses(child.color || 'blue');
                             return (
                               <button
                                 key={`task-${task.key}-day-${dayIndex}-child-${child.id}`}
@@ -141,18 +141,18 @@ export function ParentWeekView({ children, setChildren, daysOfWeek, currentDay, 
                                         ...c,
                                         tasks: c.tasks.map((t) => {
                                           if (
-                                            t.subject !== task.subject ||
+                                            t.type !== task.category ||
                                             t.title !== task.title
                                           )
                                             return t;
                                           return {
                                             ...t,
-                                            frequency: isAssigned
-                                              ? t.frequency.filter(
+                                            days: isAssigned
+                                              ? t.days.filter(
                                                   (d) => d !== dayIndex,
                                                 )
                                               : [
-                                                  ...t.frequency,
+                                                  ...t.days,
                                                   dayIndex,
                                                 ],
                                           };
@@ -161,8 +161,8 @@ export function ParentWeekView({ children, setChildren, daysOfWeek, currentDay, 
                                     }),
                                   );
                                 }}
-                                className={`w-6 h-6 rounded-full transition-all flex items-center justify-center
-                                  ${isAssigned ? colors.bg : colors.muted}
+                                className={`w-6 h-6 rounded-full transition-all flex items-center justify-center border-2
+                                  ${isAssigned ? childColors.bg + ' border-transparent' : childColors.muted}
                                   hover:shadow-md`}
                                 title={`${child.name} - ${isAssigned ? "Assigned" : "Not assigned"}`}
                               >
