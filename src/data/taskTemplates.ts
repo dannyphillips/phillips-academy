@@ -54,21 +54,21 @@ export const taskTemplates: TaskTemplatesByType = {
   morning_routine: [
     {
       title: "Brush teeth",
-      defaultPoints: 10,
+      defaultPoints: 1,
       defaultDays: [0, 1, 2, 3, 4, 5, 6],
       type: 'morning_routine',
       icon: "Smile"
     },
     {
       title: "Make bed",
-      defaultPoints: 10,
+      defaultPoints: 1,
       defaultDays: [0, 1, 2, 3, 4, 5, 6],
       type: 'morning_routine',
       icon: "Bed"
     },
     {
       title: "Get dressed",
-      defaultPoints: 10,
+      defaultPoints: 1,
       defaultDays: [0, 1, 2, 3, 4, 5, 6],
       type: 'morning_routine',
       icon: "Shirt"
@@ -77,28 +77,28 @@ export const taskTemplates: TaskTemplatesByType = {
   evening_routine: [
     {
       title: "Brush teeth",
-      defaultPoints: 10,
+      defaultPoints: 1,
       defaultDays: [0, 1, 2, 3, 4, 5, 6],
       type: 'evening_routine',
       icon: "Smile"
     },
     {
       title: "Take shower",
-      defaultPoints: 10,
+      defaultPoints: 1,
       defaultDays: [0, 1, 2, 3, 4, 5, 6],
       type: 'evening_routine',
       icon: "ShowerHead"
     },
     {
       title: "Pick out clothes",
-      defaultPoints: 10,
+      defaultPoints: 1,
       defaultDays: [0, 1, 2, 3, 4, 5, 6],
       type: 'evening_routine',
       icon: "Star"
     },
     {
       title: "Put on pajamas",
-      defaultPoints: 10,
+      defaultPoints: 1,
       defaultDays: [0, 1, 2, 3, 4, 5, 6],
       type: 'evening_routine',
       icon: "Shirt"
@@ -107,40 +107,40 @@ export const taskTemplates: TaskTemplatesByType = {
   learning_task: [
     {
       title: "Math practice",
-      defaultPoints: 20,
+      defaultPoints: 2,
       defaultDays: [1, 2, 3, 4, 5],
       type: 'learning_task',
       icon: "Calculator"
     },
     {
       title: "Reading time",
-      defaultPoints: 20,
+      defaultPoints: 2,
       defaultDays: [1, 2, 3, 4, 5],
       type: 'learning_task',
       icon: "BookOpen"
-    },
+    }
+  ],
+  extra_task: [
     {
       title: "Art project",
-      defaultPoints: 15,
+      defaultPoints: 1,
       defaultDays: [0, 1, 2, 3, 4, 5, 6],
       type: 'extra_task',
       icon: "Palette"
     },
     {
       title: "Music practice",
-      defaultPoints: 15,
+      defaultPoints: 1,
       defaultDays: [0, 1, 2, 3, 4, 5, 6],
       type: 'extra_task',
       icon: "Music"
     },
     {
       title: "Geography study",
-      defaultPoints: 15,
+      defaultPoints: 1,
       defaultDays: [0, 1, 2, 3, 4, 5, 6],
       type: 'extra_task',
       icon: "Globe"
     }
-  ],
-  extra_task: [
   ]
 }; 

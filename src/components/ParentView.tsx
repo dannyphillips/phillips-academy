@@ -12,13 +12,12 @@ import {
   deleteTaskDefinition,
   deleteTaskAssignment,
   getTaskDefinitions,
-  initializeTaskDefinitions,
   addChild,
   updateChild,
   deleteChild
 } from '../services/database';
 import { ChildModal } from './ChildModal';
-import { taskTemplates, availableIcons } from '../data/taskTemplates';
+import { taskTemplates, availableIcons, TaskTemplateDefinition } from '../data/taskTemplates';
 import { getColorClasses } from '../utils/taskUtils';
 
 interface ParentViewProps {
@@ -47,15 +46,7 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
     const loadTaskDefinitions = async () => {
       try {
         const definitions = await getTaskDefinitions();
-        if (definitions.length === 0) {
-          // If no task definitions exist, initialize them from templates
-          await initializeTaskDefinitions();
-          // Fetch the newly created definitions
-          const newDefinitions = await getTaskDefinitions();
-          setTaskDefinitions(newDefinitions);
-        } else {
-          setTaskDefinitions(definitions);
-        }
+        setTaskDefinitions(definitions);
       } catch (error) {
         console.error('Error loading task definitions:', error);
       }
@@ -66,12 +57,13 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
   useEffect(() => {
     const handleEscapeKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        if (taskEditor.isOpen) {
+        if (showSuggestions) {
+          setShowSuggestions(false);
+        } else if (taskEditor.isOpen) {
           setTaskEditor({ isOpen: false, isNew: true });
           setEditingTask({});
           setSelectedChildren([]);
-        }
-        if (isChildModalOpen) {
+        } else if (isChildModalOpen) {
           setIsChildModalOpen(false);
           setEditingChild(null);
         }
@@ -82,13 +74,30 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
     return () => {
       document.removeEventListener('keydown', handleEscapeKey);
     };
-  }, [taskEditor.isOpen, isChildModalOpen]);
+  }, [taskEditor.isOpen, isChildModalOpen, showSuggestions]);
+
+  // Handle click outside for combobox
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.task-combobox')) {
+        setShowSuggestions(false);
+      }
+    };
+
+    if (showSuggestions) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [showSuggestions]);
 
   const handleSelectAllChildren = () => {
     setSelectedChildren(children.map(child => child.id));
   };
 
-  const handleTemplateSelect = (template: TaskDefinition) => {
+  const handleTemplateSelect = (template: TaskTemplateDefinition) => {
     setEditingTask({
       definition: {
         title: template.title,
@@ -213,23 +222,27 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
         try {
           const existingAssignment = currentAssignments.find(a => a.childId === childId);
           const assignmentData = {
-            taskDefinitionId: taskDefinition.id,
-            childId,
             points: editingTask.assignment?.points || taskDefinition.defaultPoints,
-            days: editingTask.assignment?.days || taskDefinition.defaultDays,
-            streak: existingAssignment?.streak || 0,
-            completions: existingAssignment?.completions || {}
+            days: editingTask.assignment?.days || taskDefinition.defaultDays
           };
 
           if (existingAssignment) {
             await updateTaskAssignment(existingAssignment.id, assignmentData);
             return {
+              ...existingAssignment,
               ...assignmentData,
-              id: existingAssignment.id,
               definition: taskDefinition
             };
           } else {
-            const newAssignment = await addTaskAssignment(assignmentData);
+            const newAssignmentData = {
+              taskDefinitionId: taskDefinition.id,
+              childId,
+              points: editingTask.assignment?.points || taskDefinition.defaultPoints,
+              days: editingTask.assignment?.days || taskDefinition.defaultDays,
+              streak: 0,
+              completions: {}
+            };
+            const newAssignment = await addTaskAssignment(newAssignmentData);
             return {
               ...newAssignment,
               definition: taskDefinition
@@ -374,6 +387,7 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
             onEditChild={openChildModal}
             setChildren={setChildren}
             taskDefinitions={taskDefinitions}
+            setTaskDefinitions={setTaskDefinitions}
           />
         )}
       </div>
@@ -408,7 +422,7 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
                 <label className="block text-sm font-medium text-farmhouse-navy mb-1">
                   Task
                 </label>
-                <div className="relative">
+                <div className="relative task-combobox">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Search className="h-4 w-4 text-farmhouse-brown" />
                   </div>
@@ -434,29 +448,29 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
                   {showSuggestions && (
                     <div className="absolute z-10 w-full mt-1 bg-white border border-farmhouse-beige rounded-md shadow-lg max-h-60 overflow-auto">
                       {Object.entries({
-                        'Morning Routine': taskDefinitions.filter(d => d.type === 'morning_routine'),
-                        'Evening Routine': taskDefinitions.filter(d => d.type === 'evening_routine'),
-                        'Learning Tasks': taskDefinitions.filter(d => d.type === 'learning_task'),
-                        'Extra Tasks': taskDefinitions.filter(d => d.type === 'extra_task')
-                      }).map(([groupTitle, definitions]) => (
+                        'Morning Routine': taskTemplates.morning_routine,
+                        'Evening Routine': taskTemplates.evening_routine,
+                        'Learning Tasks': taskTemplates.learning_task,
+                        'Extra Tasks': taskTemplates.extra_task
+                      }).map(([groupTitle, templates]) => (
                         <div key={groupTitle}>
-                          {definitions.length > 0 && (
+                          {templates.length > 0 && (
                             <>
                               <div className="px-4 py-2 bg-farmhouse-cream/50 text-sm font-semibold text-farmhouse-navy">
                                 {groupTitle}
                               </div>
-                              {definitions.map((definition) => (
+                              {templates.map((template) => (
                                 <button
-                                  key={definition.id}
+                                  key={template.title}
                                   className="w-full text-left px-4 py-2 hover:bg-farmhouse-cream/50 focus:bg-farmhouse-cream/50 focus:outline-none"
-                                  onClick={() => handleTemplateSelect(definition)}
+                                  onClick={() => handleTemplateSelect(template)}
                                 >
                                   <div className="flex items-center gap-2">
-                                    {React.createElement(availableIcons[definition.icon], {
+                                    {availableIcons[template.icon] && React.createElement(availableIcons[template.icon], {
                                       className: "w-4 h-4 text-farmhouse-brown"
                                     })}
                                     <div className="font-medium text-farmhouse-navy">
-                                      {definition.title}
+                                      {template.title}
                                     </div>
                                   </div>
                                 </button>

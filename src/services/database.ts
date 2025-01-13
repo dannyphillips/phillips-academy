@@ -148,9 +148,11 @@ export async function deleteTaskDefinition(taskDefinitionId: string): Promise<vo
       batch.delete(doc.ref);
     });
 
-    // Delete the task definition
-    batch.delete(doc(db, TASK_DEFINITIONS_COLLECTION, taskDefinitionId));
+    // Delete the task definition itself
+    const taskDefRef = doc(db, TASK_DEFINITIONS_COLLECTION, taskDefinitionId);
+    batch.delete(taskDefRef);
 
+    // Commit all the deletes in one batch
     await batch.commit();
   } catch (error) {
     console.error('Error deleting task definition:', error);
@@ -180,7 +182,15 @@ export async function updateTaskAssignment(
   updates: Partial<Omit<TaskAssignment, 'id' | 'taskDefinitionId' | 'childId'>>
 ): Promise<void> {
   try {
-    await updateDoc(doc(db, TASK_ASSIGNMENTS_COLLECTION, assignmentId), updates);
+    // Only update the fields that are provided
+    const validUpdates = Object.entries(updates).reduce((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = value;
+      }
+      return acc;
+    }, {} as Record<string, any>);
+
+    await updateDoc(doc(db, TASK_ASSIGNMENTS_COLLECTION, assignmentId), validUpdates);
   } catch (error) {
     console.error('Error updating task assignment:', error);
     throw error;

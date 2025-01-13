@@ -16,10 +16,10 @@ interface ParentListViewProps {
   onEditChild: (child: Child) => void;
   setChildren: React.Dispatch<React.SetStateAction<Child[]>>;
   taskDefinitions: TaskDefinition[];
+  setTaskDefinitions: React.Dispatch<React.SetStateAction<TaskDefinition[]>>;
 }
 
-export function ParentListView({ children, openTaskEditor, onEditChild, setChildren, taskDefinitions }: ParentListViewProps) {
-  const uniqueTaskDefinitions = getAllUniqueTaskDefinitions(children);
+export function ParentListView({ children, openTaskEditor, onEditChild, setChildren, taskDefinitions, setTaskDefinitions }: ParentListViewProps) {
   const [deleteConfirm, setDeleteConfirm] = useState<{
     isOpen: boolean;
     taskDefinitionId?: string;
@@ -31,7 +31,7 @@ export function ParentListView({ children, openTaskEditor, onEditChild, setChild
       console.log('Deleting task definition:', taskDefinitionId);
       await deleteTaskDefinition(taskDefinitionId);
       
-      // Update local state
+      // Update local state for children
       setChildren(prev => {
         const newChildren = prev.map(child => ({
           ...child,
@@ -42,6 +42,11 @@ export function ParentListView({ children, openTaskEditor, onEditChild, setChild
         console.log('Updated children:', newChildren);
         return newChildren;
       });
+
+      // Update local state for task definitions
+      setTaskDefinitions(prev => 
+        prev.filter(def => def.id !== taskDefinitionId)
+      );
 
       // Close the confirmation modal
       setDeleteConfirm({ isOpen: false });
@@ -67,11 +72,14 @@ export function ParentListView({ children, openTaskEditor, onEditChild, setChild
       {TASK_TYPES.map((type) => (
         <TaskGroup key={type} type={type} className="space-y-4">
           <div className="bg-white rounded-lg border border-farmhouse-beige divide-y divide-farmhouse-beige">
-            {uniqueTaskDefinitions
-              .filter((uniqueTask) => uniqueTask.definition.type === type)
-              .map(({ definition, assignedChildIds }) => {
+            {taskDefinitions
+              .filter((definition) => definition.type === type)
+              .map((definition) => {
+                // Find all children that have this task assigned
                 const assignedChildren = children.filter((child) =>
-                  assignedChildIds.includes(child.id)
+                  child.taskAssignments.some(assignment => 
+                    assignment.taskDefinitionId === definition.id
+                  )
                 );
                 // Get the first assignment for this task definition from any child
                 const taskAssignment = children
@@ -85,7 +93,7 @@ export function ParentListView({ children, openTaskEditor, onEditChild, setChild
                   >
                     <div className="flex-grow flex items-center gap-3">
                       <div className="text-farmhouse-brown">
-                        {React.createElement(availableIcons[definition.icon] || CircleDot, {
+                        {availableIcons[definition.icon] && React.createElement(availableIcons[definition.icon], {
                           className: "w-5 h-5"
                         })}
                       </div>
@@ -93,9 +101,13 @@ export function ParentListView({ children, openTaskEditor, onEditChild, setChild
                         <h3 className="font-medium text-farmhouse-navy">
                           {definition.title}
                         </h3>
-                        {assignedChildIds.length === 0 && (
+                        {assignedChildren.length === 0 ? (
                           <p className="text-sm text-farmhouse-brown italic">
-                            Available for anyone
+                            Available for anyone • {definition.defaultPoints} points
+                          </p>
+                        ) : (
+                          <p className="text-sm text-farmhouse-brown">
+                            {definition.defaultPoints} points
                           </p>
                         )}
                       </div>
