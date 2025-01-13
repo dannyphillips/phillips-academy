@@ -17,9 +17,10 @@ interface ParentListViewProps {
   setChildren: React.Dispatch<React.SetStateAction<Child[]>>;
   taskDefinitions: TaskDefinition[];
   setTaskDefinitions: React.Dispatch<React.SetStateAction<TaskDefinition[]>>;
+  daysOfWeek: string[];
 }
 
-export function ParentListView({ children, openTaskEditor, onEditChild, setChildren, taskDefinitions, setTaskDefinitions }: ParentListViewProps) {
+export function ParentListView({ children, openTaskEditor, onEditChild, setChildren, taskDefinitions, setTaskDefinitions, daysOfWeek }: ParentListViewProps) {
   const [deleteConfirm, setDeleteConfirm] = useState<{
     isOpen: boolean;
     taskDefinitionId?: string;
@@ -103,11 +104,11 @@ export function ParentListView({ children, openTaskEditor, onEditChild, setChild
                         </h3>
                         {assignedChildren.length === 0 ? (
                           <p className="text-sm text-farmhouse-brown italic">
-                            Available for anyone • {definition.defaultPoints} points
+                            Available for anyone • {definition.defaultPoints} points • {definition.defaultDays.map(day => daysOfWeek[day][0]).join(', ')}
                           </p>
                         ) : (
                           <p className="text-sm text-farmhouse-brown">
-                            {definition.defaultPoints} points
+                            {definition.defaultPoints} points • {definition.defaultDays.map(day => daysOfWeek[day][0]).join(', ')}
                           </p>
                         )}
                       </div>

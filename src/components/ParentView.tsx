@@ -409,6 +409,7 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
             setChildren={setChildren}
             taskDefinitions={taskDefinitions}
             setTaskDefinitions={setTaskDefinitions}
+            daysOfWeek={daysOfWeek}
           />
         )}
       </div>

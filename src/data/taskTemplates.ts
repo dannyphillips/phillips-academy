@@ -5,7 +5,7 @@ import {
   Music, Palette, Dumbbell, ShowerHead, Bed,
   Shirt, Smile, UtensilsCrossed, Dog, Flower2,
   Brush, Trophy, GraduationCap, Brain, Star,
-  Footprints, ShoppingBag, BookOpen
+  Footprints, ShoppingBag, BookOpen, Trash2
 } from 'lucide-react';
 
 export interface TaskTemplateDefinition extends Omit<TaskDefinition, 'id'> {
@@ -47,7 +47,8 @@ export const availableIcons = {
   Star,
   Footprints,
   ShoppingBag,
-  BookOpen
+  BookOpen,
+  Trash2
 } as const;
 
 export const taskTemplates: TaskTemplatesByType = {
@@ -94,7 +95,7 @@ export const taskTemplates: TaskTemplatesByType = {
       defaultPoints: 1,
       defaultDays: [0, 1, 2, 3, 4, 5, 6],
       type: 'evening_routine',
-      icon: "Star"
+      icon: "Shirt"
     },
     {
       title: "Put on pajamas",
@@ -118,29 +119,57 @@ export const taskTemplates: TaskTemplatesByType = {
       defaultDays: [1, 2, 3, 4, 5],
       type: 'learning_task',
       icon: "BookOpen"
-    }
-  ],
-  extra_task: [
+    },
+    {
+      title: "Geography study",
+      defaultPoints: 2,
+      defaultDays: [1, 2, 3, 4, 5],
+      type: 'learning_task',
+      icon: "Globe"
+    },
+    {
+      title: "Music practice",
+      defaultPoints: 2,
+      defaultDays: [3],
+      type: 'learning_task',
+      icon: "Music"
+    },
     {
       title: "Art project",
       defaultPoints: 1,
       defaultDays: [0, 1, 2, 3, 4, 5, 6],
       type: 'extra_task',
       icon: "Palette"
-    },
+    }
+  ],
+  extra_task: [
     {
-      title: "Music practice",
+      title: "Take out trash",
       defaultPoints: 1,
       defaultDays: [0, 1, 2, 3, 4, 5, 6],
       type: 'extra_task',
-      icon: "Music"
+      icon: "Trash2"
     },
     {
-      title: "Geography study",
+      title: "Put away clothes",
       defaultPoints: 1,
       defaultDays: [0, 1, 2, 3, 4, 5, 6],
       type: 'extra_task',
-      icon: "Globe"
+      icon: "Shirt"
+    },
+    {
+      title: "Pick up toys",
+      defaultPoints: 1,
+      defaultDays: [0, 1, 2, 3, 4, 5, 6],
+      type: 'extra_task',
+      icon: "Star"
+    },
+    {
+      title: "Feed the dog",
+      defaultPoints: 1,
+      defaultDays: [0, 1, 2, 3, 4, 5, 6],
+      type: 'extra_task',
+      icon: "Dog"
     }
   ]
 }; 
