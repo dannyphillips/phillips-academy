@@ -315,6 +315,18 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
     }
   };
 
+  const handleDeleteChild = async (childId: string) => {
+    try {
+      await deleteChild(childId);
+      setChildren(prev => prev.filter(child => child.id !== childId));
+      setIsChildModalOpen(false);
+      setEditingChild(null);
+    } catch (error) {
+      console.error('Error deleting child:', error);
+      alert('Error deleting child. Please try again.');
+    }
+  };
+
   return (
     <>
       <div className="space-y-6">
@@ -364,6 +376,7 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
           setEditingChild(null);
         }}
         onSave={handleSaveChild}
+        onDelete={handleDeleteChild}
         child={editingChild || undefined}
       />
       

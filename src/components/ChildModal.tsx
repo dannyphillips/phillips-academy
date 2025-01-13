@@ -1,20 +1,23 @@
 import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { X, Save, Trash2 } from 'lucide-react';
 import { Child } from '../types/types';
 import { colors } from '../constants/colors';
+import { ConfirmModal } from './ConfirmModal';
 
 interface ChildModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (child: Omit<Child, 'id' | 'tasks'>) => void;
+  onSave: (child: Omit<Child, 'id' | 'taskAssignments'>) => void;
+  onDelete?: (childId: string) => void;
   child?: Child;
 }
 
-export function ChildModal({ isOpen, onClose, onSave, child }: ChildModalProps) {
+export function ChildModal({ isOpen, onClose, onSave, onDelete, child }: ChildModalProps) {
   const [name, setName] = useState('');
   const [age, setAge] = useState('');
   const [color, setColor] = useState(colors[0].value);
   const [points, setPoints] = useState('0');
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
 
   useEffect(() => {
     if (child) {
@@ -125,23 +128,48 @@ export function ChildModal({ isOpen, onClose, onSave, child }: ChildModalProps) 
               ))}
             </div>
           </div>
-          <div className="flex justify-end gap-2 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="secondary-button"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="primary-button"
-            >
-              {child ? 'Save Changes' : 'Add Child'}
-            </button>
+          <div className="flex justify-between pt-4">
+            {child && onDelete && (
+              <button
+                type="button"
+                onClick={() => setDeleteConfirm(true)}
+                className="flex items-center gap-2 px-3 py-2 text-red-600 hover:text-white hover:bg-red-600 rounded-lg border-2 border-red-600 transition-colors"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>Delete Child</span>
+              </button>
+            )}
+            <div className={`flex gap-2 ${!child || !onDelete ? '' : 'ml-auto'}`}>
+              <button
+                type="button"
+                onClick={onClose}
+                className="secondary-button"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="primary-button flex items-center gap-2"
+              >
+                <Save className="w-4 h-4" />
+                <span>{child ? 'Save Changes' : 'Add Child'}</span>
+              </button>
+            </div>
           </div>
         </form>
       </div>
+
+      <ConfirmModal
+        isOpen={deleteConfirm}
+        onClose={() => setDeleteConfirm(false)}
+        onConfirm={() => {
+          if (child && onDelete) {
+            onDelete(child.id);
+          }
+        }}
+        title="Delete Child"
+        message={`Are you sure you want to delete ${child?.name}? This will remove all their tasks and progress. This action cannot be undone.`}
+      />
     </div>
   );
 } 
