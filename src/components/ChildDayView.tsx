@@ -32,6 +32,13 @@ export function ChildDayView({
   }
 
   const colors = getColorClasses(currentChild.color || 'blue');
+  const taskTypes = ['morning_routine', 'evening_routine', 'learning_task', 'extra_task'];
+
+  const getTaskTypeDisplayName = (type: string) => {
+    return type.split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
 
   return (
     <div className="space-y-6">
@@ -63,54 +70,62 @@ export function ChildDayView({
       </div>
 
       <div className="space-y-4">
-        {currentChild.tasks
-          .filter((task) => task.days.includes(selectedDay))
-          .map((task) => {
-            const taskMapping = getTaskMapping(task.title);
-            const Icon = taskMapping.icon;
-            return (
-              <div
-                key={task.id}
-                className="task-card"
-              >
-                <div className="flex items-center gap-4">
-                  <button
-                    onClick={() => handleTaskComplete(currentChild.id, task.id, selectedDay)}
-                    className={`task-button ${
-                      task.completions?.[`${task.id}-${selectedDay}`] ? `${colors.bg} text-white` : 'task-button-incomplete'
-                    }`}
+        {taskTypes.map(type => {
+          const tasksOfType = currentChild.tasks
+            .filter(task => task.type === type && task.days.includes(selectedDay));
+          
+          if (tasksOfType.length === 0) return null;
+
+          return (
+            <div key={type} className="space-y-2">
+              <h2 className="text-xl font-semibold text-farmhouse-navy">
+                {getTaskTypeDisplayName(type)}
+              </h2>
+              {tasksOfType.map((task) => {
+                const Icon = task.icon;
+                return (
+                  <div
+                    key={task.id}
+                    className="task-card"
                   >
-                    {task.completions?.[`${task.id}-${selectedDay}`] && <Check className="w-4 h-4" />}
-                  </button>
-                  <div className="flex-grow flex items-center gap-3">
-                    <div className="text-farmhouse-brown">
-                      <Icon className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h3 className="font-medium text-farmhouse-navy">
-                        {taskMapping.category === 'academic' ? task.title : taskMapping.category}
-                      </h3>
-                      <p className="text-sm text-farmhouse-brown">
-                        {task.title}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 text-farmhouse-brown">
-                    <div className="flex items-center gap-1">
-                      <Trophy className="w-4 h-4" />
-                      <span className="text-sm font-medium">{task.points}</span>
-                    </div>
-                    {task.streak > 0 && (
-                      <div className="flex items-center gap-1">
-                        <Flame className="w-4 h-4" />
-                        <span className="text-sm font-medium">{task.streak}</span>
+                    <div className="flex items-center gap-4">
+                      <button
+                        onClick={() => handleTaskComplete(currentChild.id, task.id, selectedDay)}
+                        className={`task-button ${
+                          task.completions?.[`${task.id}-${selectedDay}`] ? `${colors.bg} text-white` : 'task-button-incomplete'
+                        }`}
+                      >
+                        {task.completions?.[`${task.id}-${selectedDay}`] && <Check className="w-4 h-4" />}
+                      </button>
+                      <div className="flex-grow flex items-center gap-3">
+                        <div className="text-farmhouse-brown">
+                          <Icon className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h3 className="font-medium text-farmhouse-navy">
+                            {task.title}
+                          </h3>
+                        </div>
                       </div>
-                    )}
+                      <div className="flex items-center gap-2 text-farmhouse-brown">
+                        <div className="flex items-center gap-1">
+                          <Trophy className="w-4 h-4" />
+                          <span className="text-sm font-medium">{task.points}</span>
+                        </div>
+                        {task.streak > 0 && (
+                          <div className="flex items-center gap-1">
+                            <Flame className="w-4 h-4" />
+                            <span className="text-sm font-medium">{task.streak}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            );
-          })}
+                );
+              })}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

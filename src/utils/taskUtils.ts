@@ -37,9 +37,9 @@ export function getAllUniqueTasks(children: Child[]): UniqueTask[] {
         uniqueTasks.set(key, {
           title: task.title,
           key,
-          category: mapping.category,
-          subject: mapping.category === 'academic' ? task.title : mapping.category,
-          icon: mapping.icon
+          category: task.type,
+          subject: task.title,
+          icon: task.icon
         });
       }
     });

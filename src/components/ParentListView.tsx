@@ -12,7 +12,13 @@ interface ParentListViewProps {
 
 export function ParentListView({ children, openTaskEditor, onEditChild }: ParentListViewProps) {
   const allTasks = getAllUniqueTasks(children) as UniqueTask[];
-  const categories = ["Morning Routine", "Evening Routine", "academic"];
+  const taskTypes = ['morning_routine', 'evening_routine', 'learning_task', 'extra_task'];
+
+  const getTaskTypeDisplayName = (type: string) => {
+    return type.split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
 
   return (
     <div className="space-y-6">
@@ -28,18 +34,14 @@ export function ParentListView({ children, openTaskEditor, onEditChild }: Parent
       </div>
 
       {/* Tasks Section */}
-      {categories.map((category) => (
-        <div key={category} className="space-y-4">
+      {taskTypes.map((type) => (
+        <div key={type} className="space-y-4">
           <h2 className="text-xl font-semibold text-farmhouse-navy">
-            {category === "academic" ? "Learning Tasks" : category}
+            {getTaskTypeDisplayName(type)}
           </h2>
           <div className="bg-white rounded-lg border border-farmhouse-beige divide-y divide-farmhouse-beige">
             {allTasks
-              .filter((task) => 
-                category === "academic" 
-                  ? task.category === "academic"
-                  : task.category === "routine" && task.subject === category
-              )
+              .filter((task) => task.category === type)
               .map((task) => {
                 const assignedChildren = children.filter((child) =>
                   child.tasks.some((t) => t.title === task.title)
@@ -77,7 +79,13 @@ export function ParentListView({ children, openTaskEditor, onEditChild }: Parent
                         })}
                       </div>
                       <button
-                        onClick={() => openTaskEditor(task)}
+                        onClick={() => {
+                          const childWithTask = children.find(child => 
+                            child.tasks.some(t => t.title === task.title)
+                          );
+                          const actualTask = childWithTask?.tasks.find(t => t.title === task.title);
+                          openTaskEditor(actualTask);
+                        }}
                         className="p-2 text-farmhouse-brown hover:text-farmhouse-navy rounded-full hover:bg-farmhouse-beige/50"
                       >
                         <Edit2 className="w-4 h-4" />

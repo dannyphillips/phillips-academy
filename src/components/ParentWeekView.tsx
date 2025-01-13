@@ -15,7 +15,7 @@ interface ParentWeekViewProps {
 
 export function ParentWeekView({ children, setChildren, daysOfWeek, currentDay, openTaskEditor, onEditChild }: ParentWeekViewProps) {
   const allTasks = getAllUniqueTasks(children) as UniqueTask[];
-  const categories = ["Morning Routine", "Evening Routine", "academic"];
+  const taskTypes = ['morning_routine', 'evening_routine', 'learning_task', 'extra_task'];
   const [visibleChildren, setVisibleChildren] = useState<string[]>(
     children.map((child) => child.id)
   );
@@ -26,6 +26,12 @@ export function ParentWeekView({ children, setChildren, daysOfWeek, currentDay, 
         ? prev.filter((id) => id !== childId)
         : [...prev, childId]
     );
+  };
+
+  const getTaskTypeDisplayName = (type: string) => {
+    return type.split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   };
 
   return (
@@ -67,17 +73,13 @@ export function ParentWeekView({ children, setChildren, daysOfWeek, currentDay, 
             ))}
           </div>
           <div className="space-y-6">
-            {categories.map((category) => (
-              <div key={`category-${category}`} className="space-y-2">
+            {taskTypes.map((type) => (
+              <div key={`type-${type}`} className="space-y-2">
                 <h3 className="text-lg font-semibold text-farmhouse-navy mb-3">
-                  {category === "academic" ? "Learning Tasks" : category}
+                  {getTaskTypeDisplayName(type)}
                 </h3>
                 {allTasks
-                  .filter((task) => 
-                    category === "academic" 
-                      ? task.category === "academic"
-                      : task.category === "routine" && task.subject === category
-                  )
+                  .filter((task) => task.category === type)
                   .map((task) => (
                     <div
                       key={`task-${task.key}`}
