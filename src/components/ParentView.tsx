@@ -58,7 +58,8 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
     setEditingTask({
       ...template,
       completed: false,
-      streak: 0
+      streak: 0,
+      icon: template.icon
     });
     setSearchQuery(template.title);
     setShowSuggestions(false);
@@ -114,36 +115,50 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
           )
         : [];
 
+      // Create a map of current task IDs by child
+      const currentTaskIds = new Map(
+        childrenWithTask.map(child => [
+          child.id,
+          child.tasks.find(t => t.title === taskEditor.task?.title)?.id
+        ])
+      );
+
       // Optimistically update UI first
       setChildren(prevChildren =>
         prevChildren.map(child => {
+          const isSelected = selectedChildren.includes(child.id);
+          const hadTask = childrenWithTask.some(c => c.id === child.id);
+          
           // If child is no longer selected, remove the task
-          if (!selectedChildren.includes(child.id)) {
+          if (!isSelected && hadTask) {
             return {
               ...child,
-              tasks: child.tasks.filter(t => 
-                taskEditor.task ? t.title !== taskEditor.task.title : true
-              )
+              tasks: child.tasks.filter(t => t.title !== taskEditor.task?.title)
             };
           }
           
-          // If child already had the task, update it
-          if (childrenWithTask.some(c => c.id === child.id)) {
+          // If child is selected and already had the task, update it
+          if (isSelected && hadTask) {
             return {
               ...child,
               tasks: child.tasks.map(t =>
-                taskEditor.task && t.title === taskEditor.task.title
-                  ? { ...t, ...taskData }
+                t.title === taskEditor.task?.title
+                  ? { 
+                      ...t,
+                      ...taskData,
+                      id: currentTaskIds.get(child.id) || t.id // Preserve the existing task ID
+                    }
                   : t
               )
             };
           }
           
-          // If child is newly selected, add the task (with a temporary ID)
-          if (selectedChildren.includes(child.id)) {
+          // If child is newly selected, add the task with a temporary ID
+          if (isSelected && !hadTask) {
             const tempTask = {
               ...taskData,
               id: `temp-${child.id}-${Date.now()}`,
+              childId: child.id
             };
             return {
               ...child,
@@ -171,8 +186,8 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
           ...childrenWithTask
             .filter(child => !selectedChildren.includes(child.id))
             .map(child => {
-              const taskToRemove = child.tasks.find(t => t.title === taskEditor.task?.title);
-              return taskToRemove ? deleteTask(child.id, taskToRemove.id) : Promise.resolve();
+              const taskId = currentTaskIds.get(child.id);
+              return taskId ? deleteTask(child.id, taskId) : Promise.resolve();
             })
         );
 
@@ -181,8 +196,8 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
           ...childrenWithTask
             .filter(child => selectedChildren.includes(child.id))
             .map(child => {
-              const taskToUpdate = child.tasks.find(t => t.title === taskEditor.task?.title);
-              return taskToUpdate ? updateTask(child.id, taskToUpdate.id, taskData) : Promise.resolve();
+              const taskId = currentTaskIds.get(child.id);
+              return taskId ? updateTask(child.id, taskId, taskData) : Promise.resolve();
             })
         );
 
@@ -209,18 +224,21 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
             result.childId === child.id
           );
 
+          // If no valid results for this child, keep their current tasks
+          if (validResults.length === 0) {
+            return child;
+          }
+
           return {
             ...child,
             tasks: child.tasks
-              // Remove temporary tasks and tasks that were unassigned
+              // Keep all tasks except temporary ones and the one we're updating
               .filter(t => {
-                const wasUnassigned = taskEditor.task && 
-                  t.title === taskEditor.task.title && 
-                  !selectedChildren.includes(child.id);
                 const isTemp = t.id.startsWith('temp-');
-                return !isTemp && !wasUnassigned;
+                const isUpdatedTask = taskEditor.task && t.title === taskEditor.task.title;
+                return !isTemp && !isUpdatedTask;
               })
-              // Add newly created or updated tasks
+              // Add the server-returned tasks
               .concat(validResults)
           };
         })
@@ -232,9 +250,7 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
       setSelectedChildren([]);
     } catch (error) {
       console.error('Error saving task:', error);
-      // Revert optimistic update on error by refetching data
-      // You would need to implement a refetch function
-      // For now, we'll just show an error
+      // TODO: Implement proper error handling and UI state reversion
       alert('Error saving task. Please try again.');
     }
   };

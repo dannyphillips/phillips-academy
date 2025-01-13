@@ -15,7 +15,8 @@ export const initialChildren: Child[] = [
         streak: 0,
         points: 1,
         days: [0, 1, 2, 3, 4, 5, 6],  // Every day
-        type: 'morning_routine'
+        type: 'morning_routine',
+        icon: "Smile"
       },
       {
         id: "2",
@@ -24,7 +25,8 @@ export const initialChildren: Child[] = [
         streak: 0,
         points: 1,
         days: [0, 1, 2, 3, 4, 5, 6],  // Every day
-        type: 'morning_routine'
+        type: 'morning_routine',
+        icon: "Bed"
       },
       {
         id: "3",
@@ -33,7 +35,8 @@ export const initialChildren: Child[] = [
         streak: 0,
         points: 2,
         days: [1, 3, 5],  // MWF
-        type: 'learning_task'
+        type: 'learning_task',
+        icon: "Calculator"
       }
     ]
   },
@@ -51,16 +54,18 @@ export const initialChildren: Child[] = [
         streak: 0,
         points: 1,
         days: [0, 1, 2, 3, 4, 5, 6],  // Every day
-        type: 'morning_routine'
+        type: 'morning_routine',
+        icon: "Smile"
       },
       {
         id: "5",
-        title: "Reading",
+        title: "Math Practice",
         completed: false,
         streak: 0,
         points: 2,
-        days: [1, 2, 3, 4, 5],  // Weekdays
-        type: 'learning_task'
+        days: [1, 3, 5],  // MWF
+        type: 'learning_task',
+        icon: "Calculator"
       }
     ]
   }

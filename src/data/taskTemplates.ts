@@ -1,4 +1,4 @@
-import { Task } from '../types/types';
+import { Task, IconName } from '../types/types';
 import type { LucideIcon } from 'lucide-react';
 import { 
   Sun, Moon, Book, Pencil, Calculator, Globe,
@@ -13,7 +13,7 @@ export interface TaskTemplate extends Omit<Task, 'id' | 'completed' | 'streak'> 
   points: number;
   days: number[];
   type: Task['type'];
-  icon: LucideIcon;
+  icon: IconName;
 }
 
 interface TaskTemplatesByType {
@@ -48,225 +48,99 @@ export const availableIcons = {
   Footprints,
   ShoppingBag,
   BookOpen
-};
+} as const;
 
 export const taskTemplates: TaskTemplatesByType = {
   morning_routine: [
     {
-      title: "Brush Teeth",
-      points: 1,
+      title: "Brush teeth",
+      points: 10,
       days: [0, 1, 2, 3, 4, 5, 6],
       type: 'morning_routine',
-      icon: Smile
+      icon: "Smile"
     },
     {
-      title: "Make Bed",
-      points: 1,
+      title: "Make bed",
+      points: 10,
       days: [0, 1, 2, 3, 4, 5, 6],
       type: 'morning_routine',
-      icon: Bed
+      icon: "Bed"
     },
     {
-      title: "Get Dressed",
-      points: 1,
+      title: "Get dressed",
+      points: 10,
       days: [0, 1, 2, 3, 4, 5, 6],
       type: 'morning_routine',
-      icon: Shirt
-    },
-    {
-      title: "Eat Breakfast",
-      points: 1,
-      days: [0, 1, 2, 3, 4, 5, 6],
-      type: 'morning_routine',
-      icon: UtensilsCrossed
-    },
-    {
-      title: "Pack School Bag",
-      points: 1,
-      days: [1, 2, 3, 4, 5],
-      type: 'morning_routine',
-      icon: ShoppingBag
+      icon: "Shirt"
     }
   ],
   evening_routine: [
     {
-      title: "Brush Teeth",
-      points: 1,
+      title: "Brush teeth",
+      points: 10,
       days: [0, 1, 2, 3, 4, 5, 6],
       type: 'evening_routine',
-      icon: Smile
+      icon: "Smile"
     },
     {
-      title: "Take Bath/Shower",
-      points: 2,
-      days: [0, 2, 4, 6],
-      type: 'evening_routine',
-      icon: ShowerHead
-    },
-    {
-      title: "Put Away Toys",
-      points: 1,
+      title: "Take shower",
+      points: 10,
       days: [0, 1, 2, 3, 4, 5, 6],
       type: 'evening_routine',
-      icon: Star
+      icon: "ShowerHead"
     },
     {
-      title: "Put Clothes in Hamper",
-      points: 1,
+      title: "Pick out clothes",
+      points: 10,
       days: [0, 1, 2, 3, 4, 5, 6],
       type: 'evening_routine',
-      icon: Shirt
+      icon: "Star"
     },
     {
-      title: "Set Out Clothes for Tomorrow",
-      points: 1,
-      days: [1, 2, 3, 4, 5],
+      title: "Put on pajamas",
+      points: 10,
+      days: [0, 1, 2, 3, 4, 5, 6],
       type: 'evening_routine',
-      icon: Shirt
+      icon: "Shirt"
     }
   ],
   learning_task: [
     {
-      title: "Math Practice",
-      points: 2,
-      days: [1, 3, 5],
-      type: 'learning_task',
-      icon: Calculator
-    },
-    {
-      title: "Reading Time",
-      points: 2,
+      title: "Math practice",
+      points: 20,
       days: [1, 2, 3, 4, 5],
       type: 'learning_task',
-      icon: BookOpen
+      icon: "Calculator"
     },
     {
-      title: "Writing Practice",
-      points: 2,
-      days: [2, 4],
+      title: "Reading time",
+      points: 20,
+      days: [1, 2, 3, 4, 5],
       type: 'learning_task',
-      icon: Pencil
-    },
-    {
-      title: "Science Experiment",
-      points: 3,
-      days: [3],
-      type: 'learning_task',
-      icon: Brain
-    },
-    {
-      title: "Art Project",
-      points: 2,
-      days: [2, 5],
-      type: 'learning_task',
-      icon: Palette
-    },
-    {
-      title: "Music Practice",
-      points: 2,
-      days: [1, 3, 5],
-      type: 'learning_task',
-      icon: Music
-    },
-    {
-      title: "Geography/Maps",
-      points: 2,
-      days: [2, 4],
-      type: 'learning_task',
-      icon: Globe
-    },
-    {
-      title: "Spelling Practice",
-      points: 2,
-      days: [1, 3, 5],
-      type: 'learning_task',
-      icon: Book
-    },
-    {
-      title: "History Reading",
-      points: 2,
-      days: [2, 4],
-      type: 'learning_task',
-      icon: BookOpen
-    },
-    {
-      title: "Language Learning",
-      points: 2,
-      days: [1, 3, 5],
-      type: 'learning_task',
-      icon: GraduationCap
+      icon: "BookOpen"
     }
   ],
   extra_task: [
     {
-      title: "Help with Dishes",
-      points: 2,
-      days: [0, 3, 6],
-      type: 'extra_task',
-      icon: UtensilsCrossed
-    },
-    {
-      title: "Feed Pet",
-      points: 1,
+      title: "Art project",
+      points: 15,
       days: [0, 1, 2, 3, 4, 5, 6],
       type: 'extra_task',
-      icon: Dog
+      icon: "Palette"
     },
     {
-      title: "Water Plants",
-      points: 1,
-      days: [1, 4],
-      type: 'extra_task',
-      icon: Flower2
-    },
-    {
-      title: "Clean Room",
-      points: 3,
-      days: [6],
-      type: 'extra_task',
-      icon: Brush
-    },
-    {
-      title: "Help with Laundry",
-      points: 2,
-      days: [0, 3, 6],
-      type: 'extra_task',
-      icon: Shirt
-    },
-    {
-      title: "Set Table",
-      points: 1,
+      title: "Music practice",
+      points: 15,
       days: [0, 1, 2, 3, 4, 5, 6],
       type: 'extra_task',
-      icon: UtensilsCrossed
+      icon: "Music"
     },
     {
-      title: "Exercise",
-      points: 2,
-      days: [1, 3, 5],
+      title: "Geography study",
+      points: 15,
+      days: [0, 1, 2, 3, 4, 5, 6],
       type: 'extra_task',
-      icon: Dumbbell
-    },
-    {
-      title: "Practice Sports",
-      points: 2,
-      days: [2, 4, 6],
-      type: 'extra_task',
-      icon: Footprints
-    },
-    {
-      title: "Help with Groceries",
-      points: 2,
-      days: [0],
-      type: 'extra_task',
-      icon: ShoppingBag
-    },
-    {
-      title: "Organize Toys/Books",
-      points: 2,
-      days: [6],
-      type: 'extra_task',
-      icon: Star
+      icon: "Globe"
     }
   ]
 }; 
