@@ -172,7 +172,7 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
           title: editingTask.definition.title,
           type: editingTask.definition.type || 'learning_task',
           icon: editingTask.definition.icon,
-          defaultPoints: editingTask.definition.defaultPoints || 1,
+          defaultPoints: editingTask.assignment?.points || editingTask.definition.defaultPoints || 1,
           defaultDays: editingTask.definition.defaultDays || []
         };
         taskDefinition = await addTaskDefinition(definitionData);
@@ -182,7 +182,7 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
           title: editingTask.definition.title,
           type: editingTask.definition.type,
           icon: editingTask.definition.icon,
-          defaultPoints: editingTask.definition.defaultPoints,
+          defaultPoints: editingTask.assignment?.points || editingTask.definition.defaultPoints,
           defaultDays: editingTask.definition.defaultDays
         };
         await updateTaskDefinition(taskEditor.taskDefinition.id, definitionUpdates);
@@ -190,99 +190,120 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
           ...taskEditor.taskDefinition,
           ...definitionUpdates
         };
+        
+        // Update task definitions state
         setTaskDefinitions(prev => 
           prev.map(def => 
             def.id === taskDefinition.id ? taskDefinition : def
           )
         );
+
+        // Update children state to reflect new default points in task definitions
+        setChildren(prev => 
+          prev.map(child => ({
+            ...child,
+            taskAssignments: child.taskAssignments.map(assignment => 
+              assignment.taskDefinitionId === taskDefinition.id
+                ? {
+                    ...assignment,
+                    definition: taskDefinition
+                  }
+                : assignment
+            )
+          }))
+        );
       } else {
         throw new Error('Invalid task editor state');
       }
 
-      // Handle task assignments
-      const currentAssignments = children.flatMap(child => 
-        child.taskAssignments.filter(assignment => 
-          assignment.taskDefinitionId === taskDefinition.id
-        )
-      );
+      // Handle assignments if there are selected children
+      if (selectedChildren.length > 0) {
+        // Handle task assignments
+        const currentAssignments = children.flatMap(child => 
+          child.taskAssignments.filter(assignment => 
+            assignment.taskDefinitionId === taskDefinition.id
+          )
+        );
 
-      // Remove assignments for unselected children
-      const removePromises = currentAssignments
-        .filter(assignment => !selectedChildren.includes(assignment.childId))
-        .map(async assignment => {
+        // Remove assignments for unselected children
+        const removePromises = currentAssignments
+          .filter(assignment => !selectedChildren.includes(assignment.childId))
+          .map(async assignment => {
+            try {
+              await deleteTaskAssignment(assignment.id);
+            } catch (error) {
+              console.error('Error deleting task assignment:', error);
+            }
+          });
+
+        // Add or update assignments for selected children
+        const assignmentPromises = selectedChildren.map(async childId => {
           try {
-            await deleteTaskAssignment(assignment.id);
+            const existingAssignment = currentAssignments.find(a => a.childId === childId);
+            const assignmentData = {
+              points: editingTask.assignment?.points || taskDefinition.defaultPoints,
+              days: editingTask.assignment?.days || taskDefinition.defaultDays
+            };
+
+            if (existingAssignment) {
+              await updateTaskAssignment(existingAssignment.id, assignmentData);
+              return {
+                ...existingAssignment,
+                ...assignmentData,
+                definition: taskDefinition
+              };
+            } else {
+              const newAssignmentData = {
+                taskDefinitionId: taskDefinition.id,
+                childId,
+                points: editingTask.assignment?.points || taskDefinition.defaultPoints,
+                days: editingTask.assignment?.days || taskDefinition.defaultDays,
+                streak: 0,
+                completions: {}
+              };
+              const newAssignment = await addTaskAssignment(newAssignmentData);
+              return {
+                ...newAssignment,
+                definition: taskDefinition
+              };
+            }
           } catch (error) {
-            console.error('Error deleting task assignment:', error);
+            console.error('Error updating/adding task assignment:', error);
+            return null;
           }
         });
 
-      // Add or update assignments for selected children
-      const assignmentPromises = selectedChildren.map(async childId => {
-        try {
-          const existingAssignment = currentAssignments.find(a => a.childId === childId);
-          const assignmentData = {
-            points: editingTask.assignment?.points || taskDefinition.defaultPoints,
-            days: editingTask.assignment?.days || taskDefinition.defaultDays
-          };
+        await Promise.all([...removePromises, ...assignmentPromises]);
 
-          if (existingAssignment) {
-            await updateTaskAssignment(existingAssignment.id, assignmentData);
+        // Update local state for children
+        setChildren(prev => 
+          prev.map(child => {
+            const isSelected = selectedChildren.includes(child.id);
+            const assignments = child.taskAssignments.filter(
+              assignment => assignment.taskDefinitionId !== taskDefinition.id
+            );
+
+            if (isSelected) {
+              const assignmentData = {
+                id: child.taskAssignments.find(a => a.taskDefinitionId === taskDefinition.id)?.id,
+                taskDefinitionId: taskDefinition.id,
+                childId: child.id,
+                points: editingTask.assignment?.points || taskDefinition.defaultPoints,
+                days: editingTask.assignment?.days || taskDefinition.defaultDays,
+                streak: child.taskAssignments.find(a => a.taskDefinitionId === taskDefinition.id)?.streak || 0,
+                completions: child.taskAssignments.find(a => a.taskDefinitionId === taskDefinition.id)?.completions || {},
+                definition: taskDefinition
+              } as TaskAssignment & { definition: TaskDefinition };
+              assignments.push(assignmentData);
+            }
+
             return {
-              ...existingAssignment,
-              ...assignmentData,
-              definition: taskDefinition
+              ...child,
+              taskAssignments: assignments
             };
-          } else {
-            const newAssignmentData = {
-              taskDefinitionId: taskDefinition.id,
-              childId,
-              points: editingTask.assignment?.points || taskDefinition.defaultPoints,
-              days: editingTask.assignment?.days || taskDefinition.defaultDays,
-              streak: 0,
-              completions: {}
-            };
-            const newAssignment = await addTaskAssignment(newAssignmentData);
-            return {
-              ...newAssignment,
-              definition: taskDefinition
-            };
-          }
-        } catch (error) {
-          console.error('Error updating/adding task assignment:', error);
-          return null;
-        }
-      });
-
-      await Promise.all([...removePromises, ...assignmentPromises]);
-
-      // Update local state
-      setChildren(prev => 
-        prev.map(child => {
-          const isSelected = selectedChildren.includes(child.id);
-          const assignments = child.taskAssignments.filter(
-            assignment => assignment.taskDefinitionId !== taskDefinition.id
-          );
-
-          if (isSelected) {
-            const assignmentData = {
-              taskDefinitionId: taskDefinition.id,
-              childId: child.id,
-              points: editingTask.assignment?.points || taskDefinition.defaultPoints,
-              days: editingTask.assignment?.days || taskDefinition.defaultDays,
-              streak: 0,
-              completions: {},
-              definition: taskDefinition
-            } as TaskAssignment & { definition: TaskDefinition };
-            assignments.push(assignmentData);
-          }
-
-          return {
-            ...child,
-            taskAssignments: assignments
-          };
-        })
-      );
+          })
+        );
+      }
 
       // Reset editor state
       setTaskEditor({ isOpen: false, isNew: true });
