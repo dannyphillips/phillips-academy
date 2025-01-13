@@ -3,7 +3,7 @@ import {
   SunIcon, MoonIcon, BookIcon, 
   PencilIcon, CalculatorIcon, GlobeIcon,
   MusicIcon, PaletteIcon, DumbbellIcon,
-  LucideIcon
+  LucideIcon, CircleDotIcon
 } from 'lucide-react';
 import { TaskType } from '../constants/taskTypes';
 
@@ -29,21 +29,36 @@ export function getTaskMapping(title: string) {
 export function getAllUniqueTasks(children: Child[]): UniqueTask[] {
   const uniqueTasks = new Map<string, UniqueTask>();
 
+  // First, add all tasks that are assigned to children
   children.forEach(child => {
     child.tasks.forEach(task => {
-      const mapping = getTaskMapping(task.title);
       const key = task.title;
-
       if (!uniqueTasks.has(key)) {
         uniqueTasks.set(key, {
           title: task.title,
           key,
           category: task.type,
           subject: task.title,
-          icon: task.icon
+          icon: task.icon || 'CircleDot',
+          assignedToChildren: true
         });
       }
     });
+  });
+
+  // Then, add unassigned tasks from taskMappings that aren't already in uniqueTasks
+  Object.entries(taskMappings).forEach(([title, mapping]) => {
+    const key = title;
+    if (!uniqueTasks.has(key)) {
+      uniqueTasks.set(key, {
+        title,
+        key,
+        category: mapping.category,
+        subject: title,
+        icon: 'CircleDot',
+        assignedToChildren: false
+      });
+    }
   });
 
   return Array.from(uniqueTasks.values());

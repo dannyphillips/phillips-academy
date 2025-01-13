@@ -28,19 +28,30 @@ export function ChildToggle({
       <div className="flex justify-between items-center">
         <div className="w-8" /> {/* Spacer to help center the name */}
         <h3 className="text-[36px] font-normal text-white leading-tight">{child.name}</h3>
-        {onEdit ? (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit(child);
-            }}
-            className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
-          >
-            <Edit2 className="w-3.5 h-3.5 text-white" />
-          </button>
-        ) : (
-          <div className="w-8" /> /* Spacer to help center the name */
+        {onEdit && (
+          onToggleVisibility ? (
+            <div
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(child);
+              }}
+              className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 transition-colors cursor-pointer"
+            >
+              <Edit2 className="w-3.5 h-3.5 text-white" />
+            </div>
+          ) : (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(child);
+              }}
+              className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+            >
+              <Edit2 className="w-3.5 h-3.5 text-white" />
+            </button>
+          )
         )}
+        {!onEdit && <div className="w-8" />} {/* Spacer to help center the name */}
       </div>
       {showStats && (
         <div className="flex justify-between items-center">

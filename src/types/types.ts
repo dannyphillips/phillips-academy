@@ -1,6 +1,8 @@
-import { ReactElement } from 'react';
-import { LucideIcon } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { TaskType } from '../constants/taskTypes';
+import { availableIcons } from '../data/taskTemplates';
+
+export type IconName = keyof typeof availableIcons;
 
 export interface TaskDetail {
   pages?: string;
@@ -17,16 +19,11 @@ export interface Task {
   points: number;
   days: number[];
   type: TaskType;
-  icon: LucideIcon;
+  icon: IconName;
 }
 
-export interface Child {
-  id: string;
-  name: string;
-  age: number;
-  color: string;
-  totalPoints: number;
-  tasks: Task[];
+export interface TaskWithComponent extends Task {
+  iconComponent: LucideIcon;
 }
 
 export interface TaskEditor {
@@ -35,8 +32,9 @@ export interface TaskEditor {
   task?: Task;
 }
 
-export interface EditingTask extends Partial<Task> {
-  days?: number[];
+export interface EditingTask extends Partial<Omit<Task, 'id'>> {
+  icon?: IconName;
+  iconComponent?: LucideIcon;
 }
 
 export interface UniqueTask {
@@ -44,11 +42,12 @@ export interface UniqueTask {
   subject: string;
   title: string;
   key: string;
-  icon: LucideIcon;
+  icon: IconName;
+  assignedToChildren: boolean;
 }
 
 // New types for Firestore
-export interface FirestoreTask extends Omit<Task, 'id' | 'icon'> {
+export interface FirestoreTask extends Omit<Task, 'id' | 'iconComponent'> {
   id: string;        // Firestore IDs are strings
   childId: string;   // Add this to link tasks to children
   type: TaskType;
@@ -59,4 +58,13 @@ export interface FirestoreChild {
   age: number;
   color: string;
   totalPoints: number;
+}
+
+export interface Child {
+  id: string;
+  name: string;
+  age: number;
+  color: string;
+  totalPoints: number;
+  tasks: Task[];
 } 

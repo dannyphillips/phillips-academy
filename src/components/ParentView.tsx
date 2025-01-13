@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Save, Plus, Search } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { Child, Task, TaskEditor, EditingTask } from '../types/types';
+import { Child, Task, TaskEditor, EditingTask, IconName } from '../types/types';
 import { ParentListView } from './ParentListView';
 import { ParentWeekView } from './ParentWeekView';
-import { addTask, addChild, updateChild, deleteChild } from '../services/database';
+import { addTask, addChild, updateChild, deleteChild, updateTask, deleteTask } from '../services/database';
 import { ChildModal } from './ChildModal';
 import { taskTemplates, availableIcons, TaskTemplate } from '../data/taskTemplates';
+import { getColorClasses } from '../utils/taskUtils';
 
 interface ParentViewProps {
   children: Child[];
@@ -27,6 +28,27 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
   const [searchQuery, setSearchQuery] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedChildren, setSelectedChildren] = useState<string[]>([]);
+
+  useEffect(() => {
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        if (taskEditor.isOpen) {
+          setTaskEditor({ isOpen: false, isNew: true });
+          setEditingTask({});
+          setSelectedChildren([]);
+        }
+        if (isChildModalOpen) {
+          setIsChildModalOpen(false);
+          setEditingChild(null);
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleEscapeKey);
+    return () => {
+      document.removeEventListener('keydown', handleEscapeKey);
+    };
+  }, [taskEditor.isOpen, isChildModalOpen]);
 
   const handleSelectAllChildren = () => {
     setSelectedChildren(children.map(child => child.id));
@@ -51,6 +73,12 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
     if (task) {
       setEditingTask(task);
       setSearchQuery(task.title);
+      // Find all children who have this task assigned
+      const childrenWithTask = children.filter(child =>
+        child.tasks.some(t => t.id === task.id)
+      );
+      // Set selectedChildren to their IDs
+      setSelectedChildren(childrenWithTask.map(child => child.id));
     } else {
       setEditingTask({
         title: '',
@@ -61,40 +89,144 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
         type: 'learning_task'
       });
       setSearchQuery('');
+      setSelectedChildren([]);
     }
     setShowSuggestions(false);
   };
 
   const handleSaveTask = async () => {
-    if (!editingTask.title || selectedChildren.length === 0 || !editingTask.icon) return;
+    if (!editingTask.title || !editingTask.icon) return;
 
     try {
-      const savePromises = selectedChildren.map(childId => {
-        const newTask: Omit<Task, 'id'> = {
-          title: editingTask.title!,
-          completed: false,
-          streak: 0,
+      if (taskEditor.isNew) {
+        // Handle new task creation
+        if (selectedChildren.length === 0) return;
+        
+        const savePromises = selectedChildren.map(childId => {
+          const newTask: Omit<Task, 'id'> = {
+            title: editingTask.title!,
+            completed: false,
+            streak: 0,
+            points: editingTask.points || 1,
+            days: editingTask.days || [],
+            type: editingTask.type || 'learning_task',
+            icon: editingTask.icon!
+          };
+          return addTask(childId, newTask);
+        });
+
+        const savedTasks = await Promise.all(savePromises);
+
+        // Update local state for new tasks
+        setChildren(prevChildren => 
+          prevChildren.map(child => 
+            selectedChildren.includes(child.id)
+              ? {
+                  ...child,
+                  tasks: [...child.tasks, savedTasks[selectedChildren.indexOf(child.id)]]
+                }
+              : child
+          )
+        );
+      } else if (taskEditor.task) {
+        // Handle task update
+        const updates: Partial<Omit<Task, 'id' | 'icon'>> = {
+          title: editingTask.title,
           points: editingTask.points || 1,
           days: editingTask.days || [],
-          type: editingTask.type || 'learning_task',
-          icon: editingTask.icon!
+          type: editingTask.type || 'learning_task'
         };
-        return addTask(childId, newTask);
-      });
 
-      const savedTasks = await Promise.all(savePromises);
+        // Find all children who currently have this task
+        const childrenWithTask = children.filter(child => 
+          child.tasks.some(t => t.id === taskEditor.task?.id)
+        );
 
-      // Update local state
-      setChildren(prevChildren => 
-        prevChildren.map(child => 
-          selectedChildren.includes(child.id)
-            ? {
+        // Remove task from children who are no longer selected
+        const removePromises = childrenWithTask
+          .filter(child => !selectedChildren.includes(child.id))
+          .map(child => {
+            const taskToRemove = child.tasks.find(t => t.id === taskEditor.task?.id);
+            if (taskToRemove) {
+              return deleteTask(child.id, taskToRemove.id);
+            }
+            return Promise.resolve();
+          });
+
+        // Update task for currently selected children who already have it
+        const updatePromises = childrenWithTask
+          .filter(child => selectedChildren.includes(child.id))
+          .map(child => {
+            const taskToUpdate = child.tasks.find(t => t.id === taskEditor.task?.id);
+            if (taskToUpdate) {
+              return updateTask(child.id, taskToUpdate.id, updates);
+            }
+            return Promise.resolve();
+          });
+
+        // Add task to newly selected children
+        const addPromises = selectedChildren
+          .filter(childId => !childrenWithTask.some(c => c.id === childId))
+          .map(childId => {
+            const newTask: Omit<Task, 'id'> = {
+              title: editingTask.title!,
+              completed: false,
+              streak: 0,
+              points: editingTask.points || 1,
+              days: editingTask.days || [],
+              type: editingTask.type || 'learning_task',
+              icon: editingTask.icon!
+            };
+            return addTask(childId, newTask);
+          });
+
+        // Wait for all operations to complete
+        await Promise.all([...removePromises, ...updatePromises, ...addPromises]);
+
+        // Update local state
+        setChildren(prevChildren =>
+          prevChildren.map(child => {
+            // Remove task if child is no longer selected
+            if (!selectedChildren.includes(child.id)) {
+              return {
                 ...child,
-                tasks: [...child.tasks, savedTasks[selectedChildren.indexOf(child.id)]]
-              }
-            : child
-        )
-      );
+                tasks: child.tasks.filter(t => t.id !== taskEditor.task?.id)
+              };
+            }
+            
+            // Update existing task if child already had it
+            if (childrenWithTask.some(c => c.id === child.id)) {
+              return {
+                ...child,
+                tasks: child.tasks.map(t =>
+                  t.id === taskEditor.task?.id
+                    ? {
+                        ...t,
+                        ...updates,
+                        icon: editingTask.icon!
+                      }
+                    : t
+                )
+              };
+            }
+            
+            // Add new task if child is newly selected
+            return {
+              ...child,
+              tasks: [...child.tasks, {
+                id: Date.now().toString(), // Temporary ID until we get the real one from the server
+                title: editingTask.title!,
+                completed: false,
+                streak: 0,
+                points: editingTask.points || 1,
+                days: editingTask.days || [],
+                type: editingTask.type || 'learning_task',
+                icon: editingTask.icon!
+              }]
+            };
+          })
+        );
+      }
 
       // Reset editor state
       setTaskEditor({ isOpen: false, isNew: true });
@@ -195,21 +327,21 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
             </button>
           </div>
         </header>
-        {view === 'day' ? (
-          <ParentListView
-            children={children}
-            setChildren={setChildren}
-            openTaskEditor={openTaskEditor}
-            onEditChild={openChildModal}
-          />
-        ) : (
+        {view === 'week' ? (
           <ParentWeekView
             children={children}
             setChildren={setChildren}
             daysOfWeek={daysOfWeek}
             currentDay={currentDay}
-            onEditChild={openChildModal}
             openTaskEditor={openTaskEditor}
+            onEditChild={openChildModal}
+          />
+        ) : (
+          <ParentListView
+            children={children}
+            openTaskEditor={openTaskEditor}
+            onEditChild={openChildModal}
+            setChildren={setChildren}
           />
         )}
       </div>
@@ -313,17 +445,20 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
                 </label>
                 <div className="grid grid-cols-8 gap-2 p-2 border border-farmhouse-beige rounded-md">
                   {Object.entries(availableIcons).map(([name, Icon]) => {
-                    const IconComponent = Icon as LucideIcon;
+                    const iconName = name as IconName;
                     return (
                       <button
                         key={name}
-                        onClick={() => setEditingTask(prev => ({ ...prev, icon: IconComponent }))}
+                        onClick={() => setEditingTask(prev => ({ 
+                          ...prev, 
+                          icon: iconName
+                        }))}
                         className={`p-2 rounded hover:bg-farmhouse-cream/50 ${
-                          editingTask.icon === IconComponent ? 'bg-farmhouse-cream' : ''
+                          editingTask.icon === iconName ? 'bg-farmhouse-cream' : ''
                         }`}
                         title={name}
                       >
-                        {React.createElement(IconComponent, {
+                        {React.createElement(Icon, {
                           className: "w-5 h-5 text-farmhouse-brown"
                         })}
                       </button>
@@ -343,26 +478,31 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
                     Select All
                   </button>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {children.map((child) => (
-                    <button
-                      key={child.id}
-                      onClick={() => {
-                        setSelectedChildren(prev =>
-                          prev.includes(child.id)
-                            ? prev.filter(id => id !== child.id)
-                            : [...prev, child.id]
-                        );
-                      }}
-                      className={`px-3 py-1 rounded-full border-2 transition-colors ${
-                        selectedChildren.includes(child.id)
-                          ? 'bg-farmhouse-navy text-white border-farmhouse-navy'
-                          : 'border-farmhouse-beige text-farmhouse-brown hover:border-farmhouse-navy'
-                      }`}
-                    >
-                      {child.name}
-                    </button>
-                  ))}
+                <div className="space-y-4">
+                  <div className="flex flex-wrap gap-2">
+                    {children.map((child) => {
+                      const colors = getColorClasses(child.color || 'blue');
+                      return (
+                        <button
+                          key={child.id}
+                          onClick={() => {
+                            setSelectedChildren(prev =>
+                              prev.includes(child.id)
+                                ? prev.filter(id => id !== child.id)
+                                : [...prev, child.id]
+                            );
+                          }}
+                          className={`flex items-center gap-2 px-3 py-1 rounded-full border-2 transition-colors ${
+                            selectedChildren.includes(child.id)
+                              ? `${colors.bg} text-white border-transparent`
+                              : `border-farmhouse-beige text-farmhouse-brown hover:${colors.bg} hover:text-white hover:border-transparent`
+                          }`}
+                        >
+                          {child.name}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
               <div>

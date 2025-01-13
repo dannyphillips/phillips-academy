@@ -200,4 +200,67 @@ export async function deleteChild(childId: string): Promise<void> {
     console.error('Error deleting child:', error);
     throw error;
   }
+}
+
+export async function deleteTask(childId: string, taskId: string) {
+  try {
+    // Get task data before deleting
+    const taskRef = doc(db, TASKS_COLLECTION, taskId);
+    const taskDoc = await getDoc(taskRef);
+    
+    if (!taskDoc.exists()) {
+      throw new Error('Task not found');
+    }
+
+    const taskData = taskDoc.data() as FirestoreTask;
+
+    // Delete the task document
+    await deleteDoc(taskRef);
+
+    // Update the child's total points if the task was completed
+    if (taskData.completed) {
+      const childRef = doc(db, CHILDREN_COLLECTION, childId);
+      await updateDoc(childRef, {
+        totalPoints: increment(-taskData.points)
+      });
+    }
+  } catch (error) {
+    console.error('Error deleting task:', error);
+    throw error;
+  }
+}
+
+export async function updateTask(
+  childId: string,
+  taskId: string,
+  updates: Partial<Omit<Task, 'id' | 'icon'>>
+): Promise<void> {
+  try {
+    const taskRef = doc(db, TASKS_COLLECTION, taskId);
+    
+    // Get current task data to calculate point differences if needed
+    const taskDoc = await getDoc(taskRef);
+    if (!taskDoc.exists()) {
+      throw new Error('Task not found');
+    }
+    const currentTask = taskDoc.data() as FirestoreTask;
+
+    // Update the task
+    await updateDoc(taskRef, {
+      ...updates,
+      childId // Ensure childId remains unchanged
+    });
+
+    // If points changed and task was completed, update child's total points
+    if (updates.points && currentTask.completed) {
+      const pointDiff = updates.points - currentTask.points;
+      const childRef = doc(db, CHILDREN_COLLECTION, childId);
+      await updateDoc(childRef, {
+        totalPoints: increment(pointDiff)
+      });
+    }
+  } catch (error) {
+    console.error('Error updating task:', error);
+    throw error;
+  }
 } 

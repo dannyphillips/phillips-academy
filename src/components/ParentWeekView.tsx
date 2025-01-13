@@ -101,7 +101,7 @@ export function ParentWeekView({ children, setChildren, daysOfWeek, currentDay, 
                             const isAssigned = childTask?.days.includes(dayIndex);
                             const childColors = getColorClasses(child.color || 'blue');
                             return (
-                              <button
+                              <div
                                 key={`task-${task.key}-day-${dayIndex}-child-${child.id}`}
                                 onClick={() => {
                                   setChildren((prev) =>
@@ -131,7 +131,7 @@ export function ParentWeekView({ children, setChildren, daysOfWeek, currentDay, 
                                     }),
                                   );
                                 }}
-                                className={`w-6 h-6 rounded-full transition-all flex items-center justify-center border-2
+                                className={`w-6 h-6 rounded-full transition-all flex items-center justify-center border-2 cursor-pointer
                                   ${isAssigned ? childColors.bg + ' border-transparent' : childColors.muted}
                                   hover:shadow-md`}
                                 title={`${child.name} - ${isAssigned ? "Assigned" : "Not assigned"}`}
@@ -139,7 +139,7 @@ export function ParentWeekView({ children, setChildren, daysOfWeek, currentDay, 
                                 <span className={`text-xs font-medium ${isAssigned ? 'text-white' : ''}`}>
                                   {child.name[0]}
                                 </span>
-                              </button>
+                              </div>
                             );
                           })}
                         </div>
