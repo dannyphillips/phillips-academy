@@ -20,8 +20,8 @@ export function ChildToggle({
   selectedDay = new Date().getDay()
 }: ChildToggleProps) {
   const colors = getColorClasses(child.color || 'blue');
-  const completedTasks = child.tasks.filter(t => t.completions?.[`${t.id}-${selectedDay}`]).length;
-  const totalTasks = child.tasks.filter(t => t.days.includes(selectedDay)).length;
+  const completedTasks = child.taskAssignments.filter(t => t.completions?.[`${t.id}-${selectedDay}`]).length;
+  const totalTasks = child.taskAssignments.filter(t => t.days.includes(selectedDay)).length;
 
   const content = (
     <div className="flex flex-col w-full p-3 gap-2">

@@ -1,12 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, Plus, Search } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
-import { Child, Task, TaskEditor, EditingTask, IconName } from '../types/types';
+import { Child, TaskDefinition, TaskAssignment, TaskEditor, EditingTask, IconName } from '../types/types';
+import { TaskType } from '../constants/taskTypes';
 import { ParentListView } from './ParentListView';
 import { ParentWeekView } from './ParentWeekView';
-import { addTask, addChild, updateChild, deleteChild, updateTask, deleteTask } from '../services/database';
+import { 
+  addTaskDefinition, 
+  addTaskAssignment, 
+  updateTaskDefinition,
+  updateTaskAssignment,
+  deleteTaskDefinition,
+  deleteTaskAssignment,
+  getTaskDefinitions,
+  addChild,
+  updateChild,
+  deleteChild
+} from '../services/database';
 import { ChildModal } from './ChildModal';
-import { taskTemplates, availableIcons, TaskTemplate } from '../data/taskTemplates';
+import { taskTemplates, availableIcons } from '../data/taskTemplates';
 import { getColorClasses } from '../utils/taskUtils';
 
 interface ParentViewProps {
@@ -28,6 +39,20 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
   const [searchQuery, setSearchQuery] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedChildren, setSelectedChildren] = useState<string[]>([]);
+  const [taskDefinitions, setTaskDefinitions] = useState<TaskDefinition[]>([]);
+
+  // Load task definitions
+  useEffect(() => {
+    const loadTaskDefinitions = async () => {
+      try {
+        const definitions = await getTaskDefinitions();
+        setTaskDefinitions(definitions);
+      } catch (error) {
+        console.error('Error loading task definitions:', error);
+      }
+    };
+    loadTaskDefinitions();
+  }, []);
 
   useEffect(() => {
     const handleEscapeKey = (event: KeyboardEvent) => {
@@ -54,38 +79,62 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
     setSelectedChildren(children.map(child => child.id));
   };
 
-  const handleTemplateSelect = (template: TaskTemplate) => {
+  const handleTemplateSelect = (template: TaskDefinition) => {
     setEditingTask({
-      ...template,
-      completed: false,
-      streak: 0,
-      icon: template.icon
+      definition: {
+        title: template.title,
+        type: template.type,
+        icon: template.icon,
+        defaultPoints: template.defaultPoints,
+        defaultDays: template.defaultDays
+      }
     });
     setSearchQuery(template.title);
     setShowSuggestions(false);
   };
 
-  const openTaskEditor = (task?: Task) => {
+  const openTaskEditor = (taskDefinition?: TaskDefinition, taskAssignment?: TaskAssignment) => {
     setTaskEditor({
       isOpen: true,
-      task,
-      isNew: !task,
+      isNew: !taskDefinition,
+      taskDefinition,
+      taskAssignment
     });
-    if (task) {
+
+    if (taskDefinition) {
+      // Editing existing task
       const childrenWithTask = children.filter(child =>
-        child.tasks.some(t => t.title === task.title)
+        child.taskAssignments.some(assignment => 
+          assignment.taskDefinitionId === taskDefinition.id
+        )
       );
-      setEditingTask(task);
-      setSearchQuery(task.title);
+      setEditingTask({
+        definition: taskDefinition,
+        assignment: taskAssignment || {
+          points: taskDefinition.defaultPoints,
+          days: taskDefinition.defaultDays,
+          streak: 0,
+          completions: {}
+        }
+      });
+      setSearchQuery(taskDefinition.title);
       setSelectedChildren(childrenWithTask.map(child => child.id));
     } else {
+      // Creating new task
       setEditingTask({
-        title: '',
-        completed: false,
-        streak: 0,
-        points: 1,
-        days: [],
-        type: 'learning_task'
+        definition: {
+          title: '',
+          type: 'learning_task',
+          icon: 'Book',
+          defaultPoints: 1,
+          defaultDays: []
+        },
+        assignment: {
+          points: 1,
+          days: [],
+          streak: 0,
+          completions: {}
+        }
       });
       setSearchQuery('');
       setSelectedChildren([]);
@@ -94,152 +143,121 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
   };
 
   const handleSaveTask = async () => {
-    if (!editingTask.title || !editingTask.icon) return;
+    if (!editingTask.definition?.title || !editingTask.definition.icon) return;
 
     try {
-      // Prepare the task data
-      const taskData = {
-        title: editingTask.title,
-        completed: false,
-        streak: 0,
-        points: editingTask.points || 1,
-        days: editingTask.days || [],
-        type: editingTask.type || 'learning_task',
-        icon: editingTask.icon
-      };
+      let taskDefinition: TaskDefinition;
 
-      // Find all children who currently have this task
-      const childrenWithTask = taskEditor.task 
-        ? children.filter(child => 
-            child.tasks.some(t => t.title === taskEditor.task?.title)
-          )
-        : [];
-
-      // Create a map of current task IDs by child
-      const currentTaskIds = new Map(
-        childrenWithTask.map(child => [
-          child.id,
-          child.tasks.find(t => t.title === taskEditor.task?.title)?.id
-        ])
-      );
-
-      // Optimistically update UI first
-      setChildren(prevChildren =>
-        prevChildren.map(child => {
-          const isSelected = selectedChildren.includes(child.id);
-          const hadTask = childrenWithTask.some(c => c.id === child.id);
-          
-          // If child is no longer selected, remove the task
-          if (!isSelected && hadTask) {
-            return {
-              ...child,
-              tasks: child.tasks.filter(t => t.title !== taskEditor.task?.title)
-            };
-          }
-          
-          // If child is selected and already had the task, update it
-          if (isSelected && hadTask) {
-            return {
-              ...child,
-              tasks: child.tasks.map(t =>
-                t.title === taskEditor.task?.title
-                  ? { 
-                      ...t,
-                      ...taskData,
-                      id: currentTaskIds.get(child.id) || t.id // Preserve the existing task ID
-                    }
-                  : t
-              )
-            };
-          }
-          
-          // If child is newly selected, add the task with a temporary ID
-          if (isSelected && !hadTask) {
-            const tempTask = {
-              ...taskData,
-              id: `temp-${child.id}-${Date.now()}`,
-              childId: child.id
-            };
-            return {
-              ...child,
-              tasks: [...child.tasks, tempTask]
-            };
-          }
-
-          return child;
-        })
-      );
-
-      // Prepare all database operations
-      const operations = [];
-
+      // Save or update task definition
       if (taskEditor.isNew) {
-        // Add task to selected children
-        operations.push(
-          ...selectedChildren.map(childId => 
-            addTask(childId, taskData)
+        const definitionData: Omit<TaskDefinition, 'id'> = {
+          title: editingTask.definition.title,
+          type: editingTask.definition.type || 'learning_task',
+          icon: editingTask.definition.icon,
+          defaultPoints: editingTask.definition.defaultPoints || 1,
+          defaultDays: editingTask.definition.defaultDays || []
+        };
+        taskDefinition = await addTaskDefinition(definitionData);
+        setTaskDefinitions(prev => [...prev, taskDefinition]);
+      } else if (taskEditor.taskDefinition) {
+        const definitionUpdates: Partial<Omit<TaskDefinition, 'id'>> = {
+          title: editingTask.definition.title,
+          type: editingTask.definition.type,
+          icon: editingTask.definition.icon,
+          defaultPoints: editingTask.definition.defaultPoints,
+          defaultDays: editingTask.definition.defaultDays
+        };
+        await updateTaskDefinition(taskEditor.taskDefinition.id, definitionUpdates);
+        taskDefinition = {
+          ...taskEditor.taskDefinition,
+          ...definitionUpdates
+        };
+        setTaskDefinitions(prev => 
+          prev.map(def => 
+            def.id === taskDefinition.id ? taskDefinition : def
           )
         );
-      } else if (taskEditor.task) {
-        // Remove task from unselected children
-        operations.push(
-          ...childrenWithTask
-            .filter(child => !selectedChildren.includes(child.id))
-            .map(child => {
-              const taskId = currentTaskIds.get(child.id);
-              return taskId ? deleteTask(child.id, taskId) : Promise.resolve();
-            })
-        );
-
-        // Update task for existing assignments
-        operations.push(
-          ...childrenWithTask
-            .filter(child => selectedChildren.includes(child.id))
-            .map(child => {
-              const taskId = currentTaskIds.get(child.id);
-              return taskId ? updateTask(child.id, taskId, taskData) : Promise.resolve();
-            })
-        );
-
-        // Add task to newly selected children
-        operations.push(
-          ...selectedChildren
-            .filter(childId => !childrenWithTask.some(c => c.id === childId))
-            .map(childId => addTask(childId, taskData))
-        );
+      } else {
+        throw new Error('Invalid task editor state');
       }
 
-      // Execute all operations concurrently
-      const results = await Promise.all(operations);
+      // Handle task assignments
+      const currentAssignments = children.flatMap(child => 
+        child.taskAssignments.filter(assignment => 
+          assignment.taskDefinitionId === taskDefinition.id
+        )
+      );
 
-      // Update UI with actual server data
-      setChildren(prevChildren =>
-        prevChildren.map(child => {
-          // Find any new or updated tasks for this child
-          const validResults = results.filter((result): result is Task => 
-            result !== undefined && 
-            result !== null && 
-            typeof result === 'object' && 
-            'childId' in result && 
-            result.childId === child.id
+      // Remove assignments for unselected children
+      const removePromises = currentAssignments
+        .filter(assignment => !selectedChildren.includes(assignment.childId))
+        .map(async assignment => {
+          try {
+            await deleteTaskAssignment(assignment.id);
+          } catch (error) {
+            console.error('Error deleting task assignment:', error);
+          }
+        });
+
+      // Add or update assignments for selected children
+      const assignmentPromises = selectedChildren.map(async childId => {
+        try {
+          const existingAssignment = currentAssignments.find(a => a.childId === childId);
+          const assignmentData = {
+            taskDefinitionId: taskDefinition.id,
+            childId,
+            points: editingTask.assignment?.points || taskDefinition.defaultPoints,
+            days: editingTask.assignment?.days || taskDefinition.defaultDays,
+            streak: existingAssignment?.streak || 0,
+            completions: existingAssignment?.completions || {}
+          };
+
+          if (existingAssignment) {
+            await updateTaskAssignment(existingAssignment.id, assignmentData);
+            return {
+              ...assignmentData,
+              id: existingAssignment.id,
+              definition: taskDefinition
+            };
+          } else {
+            const newAssignment = await addTaskAssignment(assignmentData);
+            return {
+              ...newAssignment,
+              definition: taskDefinition
+            };
+          }
+        } catch (error) {
+          console.error('Error updating/adding task assignment:', error);
+          return null;
+        }
+      });
+
+      await Promise.all([...removePromises, ...assignmentPromises]);
+
+      // Update local state
+      setChildren(prev => 
+        prev.map(child => {
+          const isSelected = selectedChildren.includes(child.id);
+          const assignments = child.taskAssignments.filter(
+            assignment => assignment.taskDefinitionId !== taskDefinition.id
           );
 
-          // If no valid results for this child, keep their current tasks
-          if (validResults.length === 0) {
-            return child;
+          if (isSelected) {
+            const assignmentData = {
+              taskDefinitionId: taskDefinition.id,
+              childId: child.id,
+              points: editingTask.assignment?.points || taskDefinition.defaultPoints,
+              days: editingTask.assignment?.days || taskDefinition.defaultDays,
+              streak: 0,
+              completions: {},
+              definition: taskDefinition
+            } as TaskAssignment & { definition: TaskDefinition };
+            assignments.push(assignmentData);
           }
 
           return {
             ...child,
-            tasks: child.tasks
-              // Keep all tasks except temporary ones and the one we're updating
-              .filter(t => {
-                const isTemp = t.id.startsWith('temp-');
-                const isUpdatedTask = taskEditor.task && t.title === taskEditor.task.title;
-                return !isTemp && !isUpdatedTask;
-              })
-              // Add the server-returned tasks
-              .concat(validResults)
+            taskAssignments: assignments
           };
         })
       );
@@ -250,7 +268,6 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
       setSelectedChildren([]);
     } catch (error) {
       console.error('Error saving task:', error);
-      // TODO: Implement proper error handling and UI state reversion
       alert('Error saving task. Please try again.');
     }
   };
@@ -258,70 +275,44 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
   const handleSelectAllDays = () => {
     setEditingTask(prev => ({
       ...prev,
-      days: [0, 1, 2, 3, 4, 5, 6]
+      assignment: {
+        ...prev.assignment,
+        days: [0, 1, 2, 3, 4, 5, 6]
+      }
     }));
   };
 
-  const handleAddChild = async (newChild: Omit<Child, 'id' | 'tasks' | 'totalPoints'>) => {
-    try {
-      // Add child to database
-      const savedChild = await addChild({
-        name: newChild.name,
-        age: newChild.age,
-        color: newChild.color,
-        totalPoints: 0
-      });
-
-      // Update local state
-      setChildren(prev => [...prev, savedChild]);
-    } catch (error) {
-      console.error('Error saving child:', error);
-      // TODO: Show error message to user
-    }
+  const openChildModal = (child?: Child) => {
+    setEditingChild(child || null);
+    setIsChildModalOpen(true);
   };
 
-  const handleUpdateChild = async (
-    childId: string,
-    updates: Partial<Omit<Child, 'id' | 'tasks'>>
-  ) => {
-    try {
-      await updateChild(childId, updates);
-      setChildren(prev => prev.map(child => 
-        child.id === childId 
-          ? { ...child, ...updates }
-          : child
-      ));
-    } catch (error) {
-      console.error('Error updating child:', error);
-    }
-  };
-
-  const handleDeleteChild = async (childId: string) => {
-    try {
-      await deleteChild(childId);
-      setChildren(prev => prev.filter(child => child.id !== childId));
-    } catch (error) {
-      console.error('Error deleting child:', error);
-    }
-  };
-
-  const handleSaveChild = async (childData: Omit<Child, 'id' | 'tasks' | 'totalPoints'>) => {
+  const handleSaveChild = async (childData: Omit<Child, 'id' | 'taskAssignments' | 'totalPoints'>) => {
     try {
       if (editingChild) {
-        await handleUpdateChild(editingChild.id, childData);
+        const updates: Partial<Omit<Child, 'id' | 'taskAssignments'>> = {
+          ...childData,
+          totalPoints: editingChild.totalPoints
+        };
+        await updateChild(editingChild.id, updates);
+        setChildren(prev => prev.map(child => 
+          child.id === editingChild.id 
+            ? { ...child, ...updates }
+            : child
+        ));
       } else {
-        await handleAddChild(childData);
+        const newChildData: Omit<Child, 'id' | 'taskAssignments'> = {
+          ...childData,
+          totalPoints: 0
+        };
+        const savedChild = await addChild(newChildData);
+        setChildren(prev => [...prev, savedChild]);
       }
       setIsChildModalOpen(false);
       setEditingChild(null);
     } catch (error) {
       console.error('Error saving child:', error);
     }
-  };
-
-  const openChildModal = (child?: Child) => {
-    setEditingChild(child || null);
-    setIsChildModalOpen(true);
   };
 
   return (
@@ -353,6 +344,7 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
             currentDay={currentDay}
             openTaskEditor={openTaskEditor}
             onEditChild={openChildModal}
+            taskDefinitions={taskDefinitions}
           />
         ) : (
           <ParentListView
@@ -360,6 +352,7 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
             openTaskEditor={openTaskEditor}
             onEditChild={openChildModal}
             setChildren={setChildren}
+            taskDefinitions={taskDefinitions}
           />
         )}
       </div>
@@ -406,7 +399,10 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
                       setShowSuggestions(true);
                       setEditingTask(prev => ({
                         ...prev,
-                        title: value
+                        definition: {
+                          ...prev.definition,
+                          title: value
+                        }
                       }));
                     }}
                     onFocus={() => setShowSuggestions(true)}
@@ -415,44 +411,22 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
                   />
                   {showSuggestions && (
                     <div className="absolute z-10 w-full mt-1 bg-white border border-farmhouse-beige rounded-md shadow-lg max-h-60 overflow-auto">
-                      {Object.entries(taskTemplates).map(([type, templates]) => (
-                        <div key={type}>
-                          <div className="px-4 py-2 bg-farmhouse-cream/50 font-medium text-farmhouse-navy">
-                            {type.split('_').map(word => 
-                              word.charAt(0).toUpperCase() + word.slice(1)
-                            ).join(' ')}
+                      {taskDefinitions.map((definition) => (
+                        <button
+                          key={definition.id}
+                          className="w-full text-left px-4 py-2 hover:bg-farmhouse-cream/50 focus:bg-farmhouse-cream/50 focus:outline-none"
+                          onClick={() => handleTemplateSelect(definition)}
+                        >
+                          <div className="flex items-center gap-2">
+                            {React.createElement(availableIcons[definition.icon], {
+                              className: "w-4 h-4 text-farmhouse-brown"
+                            })}
+                            <div className="font-medium text-farmhouse-navy">
+                              {definition.title}
+                            </div>
                           </div>
-                          {templates
-                            .filter((template: TaskTemplate) => 
-                              template.title.toLowerCase().includes(searchQuery.toLowerCase())
-                            )
-                            .map((template: TaskTemplate, index: number) => (
-                              <button
-                                key={`${template.title}-${index}`}
-                                className="w-full text-left px-4 py-2 hover:bg-farmhouse-cream/50 focus:bg-farmhouse-cream/50 focus:outline-none"
-                                onClick={() => handleTemplateSelect(template)}
-                              >
-                                <div className="flex items-center gap-2">
-                                  {React.createElement(availableIcons[template.icon], {
-                                    className: "w-4 h-4 text-farmhouse-brown"
-                                  })}
-                                  <div className="font-medium text-farmhouse-navy">
-                                    {template.title}
-                                  </div>
-                                </div>
-                              </button>
-                            ))}
-                        </div>
+                        </button>
                       ))}
-                      {Object.values(taskTemplates).every((templates: TaskTemplate[]) => 
-                        templates.every((template: TaskTemplate) => 
-                          !template.title.toLowerCase().includes(searchQuery.toLowerCase())
-                        )
-                      ) && (
-                        <div className="px-4 py-2 text-farmhouse-brown italic">
-                          No matching templates. Creating new task.
-                        </div>
-                      )}
                     </div>
                   )}
                 </div>
@@ -467,12 +441,15 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
                     return (
                       <button
                         key={name}
-                        onClick={() => setEditingTask(prev => ({ 
-                          ...prev, 
-                          icon: iconName
+                        onClick={() => setEditingTask(prev => ({
+                          ...prev,
+                          definition: {
+                            ...prev.definition,
+                            icon: iconName
+                          }
                         }))}
                         className={`p-2 rounded hover:bg-farmhouse-cream/50 flex items-center justify-center ${
-                          editingTask.icon === iconName ? 'bg-farmhouse-cream' : ''
+                          editingTask.definition?.icon === iconName ? 'bg-farmhouse-cream' : ''
                         }`}
                         title={name}
                       >
@@ -528,11 +505,14 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
                   Type
                 </label>
                 <select
-                  value={editingTask.type ?? "learning_task"}
+                  value={editingTask.definition?.type ?? "learning_task"}
                   onChange={(e) =>
                     setEditingTask((prev) => ({
                       ...prev,
-                      type: e.target.value as Task['type'],
+                      definition: {
+                        ...prev.definition,
+                        type: e.target.value as TaskType
+                      }
                     }))
                   }
                   className="input-field"
@@ -549,11 +529,14 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
                 </label>
                 <input
                   type="number"
-                  value={editingTask.points ?? 1}
+                  value={editingTask.assignment?.points ?? editingTask.definition?.defaultPoints ?? 1}
                   onChange={(e) =>
                     setEditingTask((prev) => ({
                       ...prev,
-                      points: parseInt(e.target.value) || 1,
+                      assignment: {
+                        ...prev.assignment,
+                        points: parseInt(e.target.value) || 1
+                      }
                     }))
                   }
                   className="input-field"
@@ -577,15 +560,24 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
                     <button
                       key={day}
                       onClick={() =>
-                        setEditingTask((prev) => ({
-                          ...prev,
-                          days: prev.days?.includes(index)
-                            ? prev.days.filter((d) => d !== index)
-                            : [...(prev.days ?? []), index],
-                        }))
+                        setEditingTask((prev) => {
+                          const currentDays = prev.assignment?.days || prev.definition?.defaultDays || [];
+                          const newDays = currentDays.includes(index)
+                            ? currentDays.filter((d) => d !== index)
+                            : [...currentDays, index];
+                          return {
+                            ...prev,
+                            assignment: {
+                              ...prev.assignment,
+                              days: newDays
+                            }
+                          };
+                        })
                       }
                       className={`day-button ${
-                        editingTask.days?.includes(index) ? 'day-button-active' : 'day-button-inactive'
+                        (editingTask.assignment?.days || editingTask.definition?.defaultDays || []).includes(index)
+                          ? 'day-button-active'
+                          : 'day-button-inactive'
                       }`}
                     >
                       {day[0]}

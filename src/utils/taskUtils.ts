@@ -1,74 +1,5 @@
-import { Child, Task, UniqueTask, IconName } from '../types/types';
-import { 
-  SunIcon, MoonIcon, BookIcon, 
-  PencilIcon, CalculatorIcon, GlobeIcon,
-  MusicIcon, PaletteIcon, DumbbellIcon,
-  LucideIcon, CircleDotIcon
-} from 'lucide-react';
+import { Child, TaskDefinition, UniqueTaskDefinition } from '../types/types';
 import { TaskType } from '../constants/taskTypes';
-import { availableIcons } from '../data/taskTemplates';
-
-// Map task titles to icons and categories
-const taskMappings: Record<string, { icon: LucideIcon; category: TaskType }> = {
-  'Brush Teeth': { icon: SunIcon, category: 'morning_routine' },
-  'Make Bed': { icon: SunIcon, category: 'morning_routine' },
-  'Get Dressed': { icon: SunIcon, category: 'morning_routine' },
-  'Shower': { icon: MoonIcon, category: 'evening_routine' },
-  'Math Practice': { icon: CalculatorIcon, category: 'learning_task' },
-  'Reading': { icon: BookIcon, category: 'learning_task' },
-  'Writing': { icon: PencilIcon, category: 'learning_task' },
-  'Geography': { icon: GlobeIcon, category: 'learning_task' },
-  'Music Practice': { icon: MusicIcon, category: 'learning_task' },
-  'Art': { icon: PaletteIcon, category: 'learning_task' },
-  'Exercise': { icon: DumbbellIcon, category: 'learning_task' }
-};
-
-export function getTaskMapping(title: string) {
-  return taskMappings[title] || { icon: BookIcon, category: 'learning_task' };
-}
-
-export function getAllUniqueTasks(children: Child[]): UniqueTask[] {
-  const uniqueTasks = new Map<string, UniqueTask>();
-
-  // First, add all tasks that are assigned to children
-  children.forEach(child => {
-    child.tasks.forEach(task => {
-      const key = task.title;
-      if (!uniqueTasks.has(key)) {
-        uniqueTasks.set(key, {
-          title: task.title,
-          key,
-          category: task.type,
-          subject: task.title,
-          icon: task.icon || 'CircleDot', // Always use the task's icon from Firebase
-          assignedToChildren: true
-        });
-      }
-    });
-  });
-
-  // Then, add unassigned tasks from taskMappings that aren't already in uniqueTasks
-  Object.entries(taskMappings).forEach(([title, mapping]) => {
-    const key = title;
-    if (!uniqueTasks.has(key)) {
-      // Find the icon name by looking up the component in availableIcons
-      const iconName = Object.entries(availableIcons).find(
-        ([_, component]) => component === mapping.icon
-      )?.[0] as IconName || 'CircleDot';
-
-      uniqueTasks.set(key, {
-        title,
-        key,
-        category: mapping.category,
-        subject: title,
-        icon: iconName,
-        assignedToChildren: false
-      });
-    }
-  });
-
-  return Array.from(uniqueTasks.values());
-}
 
 // Color utility functions
 const colorClasses: Record<string, { bg: string; muted: string }> = {
@@ -88,4 +19,28 @@ const colorClasses: Record<string, { bg: string; muted: string }> = {
 
 export function getColorClasses(color: string) {
   return colorClasses[color] || colorClasses.sage;
+}
+
+export function getAllUniqueTaskDefinitions(children: Child[]): UniqueTaskDefinition[] {
+  const uniqueTasks = new Map<string, UniqueTaskDefinition>();
+
+  // Add all task definitions from children's assignments
+  children.forEach(child => {
+    child.taskAssignments.forEach(assignment => {
+      const definition = assignment.definition;
+      if (!uniqueTasks.has(definition.id)) {
+        uniqueTasks.set(definition.id, {
+          definition,
+          assignedChildIds: [child.id]
+        });
+      } else {
+        const existing = uniqueTasks.get(definition.id)!;
+        if (!existing.assignedChildIds.includes(child.id)) {
+          existing.assignedChildIds.push(child.id);
+        }
+      }
+    });
+  });
+
+  return Array.from(uniqueTasks.values());
 } 

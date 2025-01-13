@@ -7,70 +7,77 @@ import {
   updateDoc,
   query,
   where,
-  DocumentReference,
-  CollectionReference,
   addDoc,
   deleteDoc,
   getDoc,
-  increment
+  increment,
+  writeBatch
 } from 'firebase/firestore';
-import { Child, Task, FirestoreChild, FirestoreTask } from '../types/types';
-import { getTaskMapping } from '../utils/taskUtils';
+import { 
+  Child, 
+  FirestoreChild, 
+  TaskDefinition,
+  TaskAssignment,
+  FirestoreTaskDefinition,
+  FirestoreTaskAssignment
+} from '../types/types';
 
 // Collections
 const CHILDREN_COLLECTION = 'children';
-const TASKS_COLLECTION = 'tasks';
+const TASK_DEFINITIONS_COLLECTION = 'taskDefinitions';
+const TASK_ASSIGNMENTS_COLLECTION = 'taskAssignments';
 
 // Helper function to convert Firestore data to our app's data structure
 const convertFirestoreDataToChild = async (
-  childDoc: FirestoreChild & { id: string },
-  tasksSnapshot: FirestoreTask[]
+  childDoc: FirestoreChild & { id: string }
 ): Promise<Child> => {
+  // Get all task assignments for this child
+  const assignmentsSnapshot = await getDocs(
+    query(collection(db, TASK_ASSIGNMENTS_COLLECTION), where('childId', '==', childDoc.id))
+  );
+
+  const taskAssignments: (TaskAssignment & { definition: TaskDefinition })[] = [];
+
+  for (const assignmentDoc of assignmentsSnapshot.docs) {
+    const assignment = {
+      id: assignmentDoc.id,
+      ...assignmentDoc.data()
+    } as TaskAssignment;
+
+    // Get the task definition
+    const definitionDoc = await getDoc(doc(db, TASK_DEFINITIONS_COLLECTION, assignment.taskDefinitionId));
+    if (definitionDoc.exists()) {
+      const definition = {
+        id: definitionDoc.id,
+        ...definitionDoc.data()
+      } as TaskDefinition;
+
+      taskAssignments.push({
+        ...assignment,
+        definition
+      });
+    }
+  }
+
   return {
     id: childDoc.id,
     name: childDoc.name,
     age: childDoc.age,
     color: childDoc.color,
     totalPoints: childDoc.totalPoints,
-    tasks: tasksSnapshot.map(task => ({
-      id: task.id,
-      title: task.title,
-      completed: task.completed,
-      streak: task.streak,
-      points: task.points,
-      days: task.days,
-      type: task.type,
-      icon: task.icon,
-      completions: task.completions || {}
-    }))
+    taskAssignments
   };
 };
 
-// Get all children and their tasks
+// Get all children with their task assignments and definitions
 export async function getChildren(): Promise<Child[]> {
   try {
-    const querySnapshot = await getDocs(collection(db, 'children'));
+    const querySnapshot = await getDocs(collection(db, CHILDREN_COLLECTION));
     const children: Child[] = [];
 
     for (const doc of querySnapshot.docs) {
       const childData = doc.data() as FirestoreChild;
-      
-      // Get tasks for this child
-      const tasksSnapshot = await getDocs(collection(db, 'tasks'));
-      const tasks = tasksSnapshot.docs
-        .map(taskDoc => {
-          const task = taskDoc.data() as FirestoreTask;
-          return task.childId === doc.id ? {
-            ...task,
-            id: taskDoc.id
-          } : null;
-        })
-        .filter((task): task is FirestoreTask => task !== null);
-
-      const child = await convertFirestoreDataToChild(
-        { ...childData, id: doc.id },
-        tasks
-      );
+      const child = await convertFirestoreDataToChild({ ...childData, id: doc.id });
       children.push(child);
     }
 
@@ -81,99 +88,169 @@ export async function getChildren(): Promise<Child[]> {
   }
 }
 
-// Update a task's completion status
+// Get all task definitions
+export async function getTaskDefinitions(): Promise<TaskDefinition[]> {
+  try {
+    const querySnapshot = await getDocs(collection(db, TASK_DEFINITIONS_COLLECTION));
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as TaskDefinition));
+  } catch (error) {
+    console.error('Error getting task definitions:', error);
+    throw error;
+  }
+}
+
+// Add a new task definition
+export async function addTaskDefinition(
+  taskDefinition: Omit<TaskDefinition, 'id'>
+): Promise<TaskDefinition> {
+  try {
+    const docRef = await addDoc(collection(db, TASK_DEFINITIONS_COLLECTION), taskDefinition);
+    return {
+      id: docRef.id,
+      ...taskDefinition
+    };
+  } catch (error) {
+    console.error('Error adding task definition:', error);
+    throw error;
+  }
+}
+
+// Update a task definition
+export async function updateTaskDefinition(
+  taskDefinitionId: string,
+  updates: Partial<Omit<TaskDefinition, 'id'>>
+): Promise<void> {
+  try {
+    await updateDoc(doc(db, TASK_DEFINITIONS_COLLECTION, taskDefinitionId), updates);
+  } catch (error) {
+    console.error('Error updating task definition:', error);
+    throw error;
+  }
+}
+
+// Delete a task definition and all its assignments
+export async function deleteTaskDefinition(taskDefinitionId: string): Promise<void> {
+  try {
+    const batch = writeBatch(db);
+
+    // Delete all assignments for this task definition
+    const assignmentsSnapshot = await getDocs(
+      query(collection(db, TASK_ASSIGNMENTS_COLLECTION), 
+        where('taskDefinitionId', '==', taskDefinitionId)
+      )
+    );
+
+    assignmentsSnapshot.docs.forEach(doc => {
+      batch.delete(doc.ref);
+    });
+
+    // Delete the task definition
+    batch.delete(doc(db, TASK_DEFINITIONS_COLLECTION, taskDefinitionId));
+
+    await batch.commit();
+  } catch (error) {
+    console.error('Error deleting task definition:', error);
+    throw error;
+  }
+}
+
+// Add a task assignment
+export async function addTaskAssignment(
+  assignment: Omit<TaskAssignment, 'id'>
+): Promise<TaskAssignment> {
+  try {
+    const docRef = await addDoc(collection(db, TASK_ASSIGNMENTS_COLLECTION), assignment);
+    return {
+      id: docRef.id,
+      ...assignment
+    };
+  } catch (error) {
+    console.error('Error adding task assignment:', error);
+    throw error;
+  }
+}
+
+// Update a task assignment
+export async function updateTaskAssignment(
+  assignmentId: string,
+  updates: Partial<Omit<TaskAssignment, 'id' | 'taskDefinitionId' | 'childId'>>
+): Promise<void> {
+  try {
+    await updateDoc(doc(db, TASK_ASSIGNMENTS_COLLECTION, assignmentId), updates);
+  } catch (error) {
+    console.error('Error updating task assignment:', error);
+    throw error;
+  }
+}
+
+// Delete a task assignment
+export async function deleteTaskAssignment(assignmentId: string): Promise<void> {
+  try {
+    await deleteDoc(doc(db, TASK_ASSIGNMENTS_COLLECTION, assignmentId));
+  } catch (error) {
+    console.error('Error deleting task assignment:', error);
+    throw error;
+  }
+}
+
+// Update task completion status
 export const updateTaskCompletion = async (
-  childId: string,
-  taskId: string,
+  assignmentId: string,
   completed: boolean,
   streak: number,
   points: number,
   dayIndex: number
 ): Promise<void> => {
   try {
-    const taskRef = doc(db, TASKS_COLLECTION, taskId);
-    const completionKey = `${taskId}-${dayIndex}`;
+    const assignmentRef = doc(db, TASK_ASSIGNMENTS_COLLECTION, assignmentId);
+    const assignmentDoc = await getDoc(assignmentRef);
+    
+    if (!assignmentDoc.exists()) {
+      throw new Error('Task assignment not found');
+    }
+    
+    const assignment = assignmentDoc.data() as FirestoreTaskAssignment;
+    const completionKey = `${assignmentId}-${dayIndex}`;
 
     // Update both documents in parallel
     await Promise.all([
-      // Update task completion
-      updateDoc(taskRef, {
+      // Update assignment completion
+      updateDoc(assignmentRef, {
         [`completions.${completionKey}`]: completed,
         streak,
         points
       }),
-      // Update child points using increment
-      updateDoc(doc(db, CHILDREN_COLLECTION, childId), {
+      // Update child points
+      updateDoc(doc(db, CHILDREN_COLLECTION, assignment.childId), {
         totalPoints: increment(completed ? points : -points)
       })
     ]);
   } catch (error) {
-    console.error('Error updating task:', error);
+    console.error('Error updating task completion:', error);
     throw error;
   }
 };
 
-// Add a new task
-export const addTask = async (childId: string, task: Omit<Task, 'id'>): Promise<Task> => {
+// Add a new child
+export async function addChild(child: Omit<Child, 'id' | 'taskAssignments'>): Promise<Child> {
   try {
-    const tasksRef = collection(db, TASKS_COLLECTION);
-    const newTaskRef = doc(tasksRef); // Let Firestore generate the ID
-
-    // Create a clean object with only primitive values and arrays
-    const firestoreData = {
-      title: task.title,
-      completed: false,
-      streak: task.streak || 0,
-      points: task.points || 1,
-      days: Array.isArray(task.days) ? task.days : [],
-      type: task.type,
-      id: newTaskRef.id,
-      childId: childId,
-      icon: task.icon, // icon is already an IconName string
-      completions: {}
-    };
-
-    // First create the document with the basic data
-    await setDoc(newTaskRef, firestoreData);
-
-    // Return a properly structured Task object
-    const newTask: Task = {
-      id: newTaskRef.id,
-      title: task.title,
-      completed: false,
-      streak: task.streak || 0,
-      points: task.points || 1,
-      days: Array.isArray(task.days) ? task.days : [],
-      type: task.type,
-      icon: task.icon, // icon is already an IconName string
-      completions: {}
-    };
-
-    return newTask;
-  } catch (error) {
-    console.error('Error adding task:', error);
-    throw error;
-  }
-};
-
-export async function addChild(child: Omit<Child, 'id' | 'tasks'>): Promise<Child> {
-  try {
-    // Create the child document in Firestore
-    const childRef = await addDoc(collection(db, 'children'), {
+    const childRef = await addDoc(collection(db, CHILDREN_COLLECTION), {
       name: child.name,
       age: child.age,
       color: child.color,
       totalPoints: 0
     });
 
-    // Return the complete child object
     return {
       id: childRef.id,
       name: child.name,
       age: child.age,
       color: child.color,
       totalPoints: 0,
-      tasks: []
+      taskAssignments: []
     };
   } catch (error) {
     console.error('Error adding child:', error);
@@ -181,95 +258,39 @@ export async function addChild(child: Omit<Child, 'id' | 'tasks'>): Promise<Chil
   }
 }
 
+// Update a child
 export async function updateChild(
   childId: string,
-  updates: Partial<Omit<Child, 'id' | 'tasks'>>
+  updates: Partial<Omit<Child, 'id' | 'taskAssignments'>>
 ): Promise<void> {
   try {
-    const childRef = doc(db, 'children', childId);
-    await updateDoc(childRef, updates);
+    await updateDoc(doc(db, CHILDREN_COLLECTION, childId), updates);
   } catch (error) {
     console.error('Error updating child:', error);
     throw error;
   }
 }
 
+// Delete a child and all their task assignments
 export async function deleteChild(childId: string): Promise<void> {
   try {
-    await deleteDoc(doc(db, 'children', childId));
+    const batch = writeBatch(db);
     
-    // Delete all tasks associated with this child
-    const tasksSnapshot = await getDocs(collection(db, 'tasks'));
-    const deletePromises = tasksSnapshot.docs
-      .filter(doc => doc.data().childId === childId)
-      .map(doc => deleteDoc(doc.ref));
+    // Delete all task assignments for this child
+    const assignmentsSnapshot = await getDocs(
+      query(collection(db, TASK_ASSIGNMENTS_COLLECTION), where('childId', '==', childId))
+    );
     
-    await Promise.all(deletePromises);
+    assignmentsSnapshot.docs.forEach(doc => {
+      batch.delete(doc.ref);
+    });
+    
+    // Delete the child
+    batch.delete(doc(db, CHILDREN_COLLECTION, childId));
+    
+    await batch.commit();
   } catch (error) {
     console.error('Error deleting child:', error);
-    throw error;
-  }
-}
-
-export async function deleteTask(childId: string, taskId: string) {
-  try {
-    // Get task data before deleting
-    const taskRef = doc(db, TASKS_COLLECTION, taskId);
-    const taskDoc = await getDoc(taskRef);
-    
-    if (!taskDoc.exists()) {
-      throw new Error('Task not found');
-    }
-
-    const taskData = taskDoc.data() as FirestoreTask;
-
-    // Delete the task document
-    await deleteDoc(taskRef);
-
-    // Update the child's total points if the task was completed
-    if (taskData.completed) {
-      const childRef = doc(db, CHILDREN_COLLECTION, childId);
-      await updateDoc(childRef, {
-        totalPoints: increment(-taskData.points)
-      });
-    }
-  } catch (error) {
-    console.error('Error deleting task:', error);
-    throw error;
-  }
-}
-
-export async function updateTask(
-  childId: string,
-  taskId: string,
-  updates: Partial<Omit<Task, 'id'>>
-): Promise<void> {
-  try {
-    const taskRef = doc(db, TASKS_COLLECTION, taskId);
-    
-    // Get current task data to calculate point differences if needed
-    const taskDoc = await getDoc(taskRef);
-    if (!taskDoc.exists()) {
-      throw new Error('Task not found');
-    }
-    const currentTask = taskDoc.data() as FirestoreTask;
-
-    // Update the task
-    await updateDoc(taskRef, {
-      ...updates,
-      childId // Ensure childId remains unchanged
-    });
-
-    // If points changed and task was completed, update child's total points
-    if (updates.points && currentTask.completed) {
-      const pointDiff = updates.points - currentTask.points;
-      const childRef = doc(db, CHILDREN_COLLECTION, childId);
-      await updateDoc(childRef, {
-        totalPoints: increment(pointDiff)
-      });
-    }
-  } catch (error) {
-    console.error('Error updating task:', error);
     throw error;
   }
 } 
