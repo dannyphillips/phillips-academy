@@ -1,1 +1,0 @@
-if('serviceWorker' in navigator) navigator.serviceWorker.register('/phillips-academy/dev-sw.js?dev-sw', { scope: '/phillips-academy/', type: 'classic' })
