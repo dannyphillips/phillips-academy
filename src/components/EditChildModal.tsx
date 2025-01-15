@@ -16,7 +16,7 @@ export function EditChildModal({ isOpen, onClose, onSave, onDelete, child }: Edi
   if (!isOpen || !child) return null;
 
   const handleSave = () => {
-    if (!editingChild.name && !editingChild.age && !editingChild.color) return;
+    if (!editingChild.name && !editingChild.age && !editingChild.color && editingChild.totalPoints === undefined) return;
     onSave(child.id, editingChild);
     onClose();
   };
@@ -63,6 +63,23 @@ export function EditChildModal({ isOpen, onClose, onSave, onDelete, child }: Edi
                 setEditingChild((prev) => ({
                   ...prev,
                   age: parseInt(e.target.value) || 0,
+                }))
+              }
+              className="input-field"
+              min="0"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-farmhouse-navy mb-1">
+              Points
+            </label>
+            <input
+              type="number"
+              value={editingChild.totalPoints ?? child.totalPoints}
+              onChange={(e) =>
+                setEditingChild((prev) => ({
+                  ...prev,
+                  totalPoints: parseInt(e.target.value) || 0,
                 }))
               }
               className="input-field"

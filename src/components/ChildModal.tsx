@@ -1,21 +1,19 @@
 import { useState, useEffect } from 'react';
 import { X, Save, Trash2 } from 'lucide-react';
 import { Child } from '../types/types';
-import { colors } from '../constants/colors';
-import { ConfirmModal } from './ConfirmModal';
 
 interface ChildModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (child: Omit<Child, 'id' | 'taskAssignments'>) => void;
-  onDelete?: (childId: string) => void;
+  onSave: (childData: Omit<Child, 'id' | 'taskAssignments'>) => void;
+  onDelete: (childId: string) => void;
   child?: Child;
 }
 
 export function ChildModal({ isOpen, onClose, onSave, onDelete, child }: ChildModalProps) {
   const [name, setName] = useState('');
   const [age, setAge] = useState('');
-  const [color, setColor] = useState(colors[0].value);
+  const [color, setColor] = useState('blue');
   const [points, setPoints] = useState('0');
   const [deleteConfirm, setDeleteConfirm] = useState(false);
 
@@ -28,7 +26,7 @@ export function ChildModal({ isOpen, onClose, onSave, onDelete, child }: ChildMo
     } else {
       setName('');
       setAge('');
-      setColor(colors[0].value);
+      setColor('blue');
       setPoints('0');
     }
   }, [child, isOpen]);
@@ -43,7 +41,7 @@ export function ChildModal({ isOpen, onClose, onSave, onDelete, child }: ChildMo
     });
     setName('');
     setAge('');
-    setColor(colors[0].value);
+    setColor('blue');
     setPoints('0');
     onClose();
   };
@@ -66,80 +64,72 @@ export function ChildModal({ isOpen, onClose, onSave, onDelete, child }: ChildMo
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-farmhouse-navy mb-1">
-              First Name
+            <label className="block text-sm font-medium text-farmhouse-navy mb-1">
+              Name
             </label>
             <input
-              id="name"
               type="text"
-              required
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="input-field"
-              placeholder="Enter first name"
+              required
             />
           </div>
           <div>
-            <label htmlFor="age" className="block text-sm font-medium text-farmhouse-navy mb-1">
+            <label className="block text-sm font-medium text-farmhouse-navy mb-1">
               Age
             </label>
             <input
-              id="age"
               type="number"
-              required
-              min="1"
-              max="18"
               value={age}
               onChange={(e) => setAge(e.target.value)}
               className="input-field"
-              placeholder="Enter age"
+              min="0"
+              required
             />
           </div>
           <div>
-            <label htmlFor="points" className="block text-sm font-medium text-farmhouse-navy mb-1">
+            <label className="block text-sm font-medium text-farmhouse-navy mb-1">
               Points
             </label>
             <input
-              id="points"
               type="number"
-              required
-              min="0"
               value={points}
               onChange={(e) => setPoints(e.target.value)}
               className="input-field"
-              placeholder="Enter points"
+              min="0"
+              required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-farmhouse-navy mb-2">
+            <label className="block text-sm font-medium text-farmhouse-navy mb-1">
               Color Theme
             </label>
-            <div className="grid grid-cols-6 gap-2">
-              {colors.map((c) => (
-                <button
-                  key={c.value}
-                  type="button"
-                  onClick={() => setColor(c.value)}
-                  className={`w-8 h-8 rounded-full border-2 ${
-                    color === c.value ? 'border-blue-800' : 'border-transparent'
-                  } ${c.class} hover:opacity-90 transition-opacity`}
-                  title={c.name}
-                />
-              ))}
-            </div>
+            <select
+              value={color}
+              onChange={(e) => setColor(e.target.value)}
+              className="input-field"
+              required
+            >
+              <option value="blue">Blue</option>
+              <option value="purple">Purple</option>
+              <option value="pink">Pink</option>
+              <option value="green">Green</option>
+              <option value="orange">Orange</option>
+            </select>
           </div>
           <div className="flex justify-between pt-4">
-            {child && onDelete && (
+            {child && (
               <button
                 type="button"
                 onClick={() => setDeleteConfirm(true)}
-                className="flex items-center gap-2 px-3 py-2 text-red-600 hover:text-white hover:bg-red-600 rounded-lg border-2 border-red-600 transition-colors"
+                className="danger-button"
               >
                 <Trash2 className="w-4 h-4" />
-                <span>Delete Child</span>
+                Delete Child
               </button>
             )}
-            <div className={`flex gap-2 ${!child || !onDelete ? '' : 'ml-auto'}`}>
+            <div className="flex gap-2 ml-auto">
               <button
                 type="button"
                 onClick={onClose}
@@ -149,27 +139,47 @@ export function ChildModal({ isOpen, onClose, onSave, onDelete, child }: ChildMo
               </button>
               <button
                 type="submit"
-                className="primary-button flex items-center gap-2"
+                className="primary-button"
               >
                 <Save className="w-4 h-4" />
-                <span>{child ? 'Save Changes' : 'Add Child'}</span>
+                Save Changes
               </button>
             </div>
           </div>
         </form>
       </div>
 
-      <ConfirmModal
-        isOpen={deleteConfirm}
-        onClose={() => setDeleteConfirm(false)}
-        onConfirm={() => {
-          if (child && onDelete) {
-            onDelete(child.id);
-          }
-        }}
-        title="Delete Child"
-        message={`Are you sure you want to delete ${child?.name}? This will remove all their tasks and progress. This action cannot be undone.`}
-      />
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm && child && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white rounded-lg w-full max-w-md p-6 space-y-6">
+            <h2 className="text-xl font-semibold text-farmhouse-navy">
+              Delete Child
+            </h2>
+            <p className="text-farmhouse-brown">
+              Are you sure you want to delete {child.name}? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setDeleteConfirm(false)}
+                className="secondary-button"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  onDelete(child.id);
+                  setDeleteConfirm(false);
+                }}
+                className="danger-button"
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

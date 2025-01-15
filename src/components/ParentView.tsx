@@ -330,12 +330,11 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
     setIsChildModalOpen(true);
   };
 
-  const handleSaveChild = async (childData: Omit<Child, 'id' | 'taskAssignments' | 'totalPoints'>) => {
+  const handleSaveChild = async (childData: Omit<Child, 'id' | 'taskAssignments'>) => {
     try {
       if (editingChild) {
         const updates: Partial<Omit<Child, 'id' | 'taskAssignments'>> = {
-          ...childData,
-          totalPoints: editingChild.totalPoints
+          ...childData
         };
         await updateChild(editingChild.id, updates);
         setChildren(prev => prev.map(child => 
