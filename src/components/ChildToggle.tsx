@@ -2,6 +2,16 @@ import { Edit2, Trophy } from 'lucide-react';
 import { Child } from '../types/types';
 import { getColorClasses } from '../utils/taskUtils';
 
+// Helper function to get the completion date key for a given day index
+function getCompletionDateKey(dayIndex: number): string {
+  const today = new Date();
+  const currentWeekStart = new Date(today);
+  currentWeekStart.setDate(today.getDate() - today.getDay()); // Get start of week (Sunday)
+  const completionDate = new Date(currentWeekStart);
+  completionDate.setDate(currentWeekStart.getDate() + dayIndex);
+  return completionDate.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+}
+
 interface ChildToggleProps {
   child: Child;
   onEdit?: (child: Child) => void;
@@ -20,7 +30,7 @@ export function ChildToggle({
   selectedDay = new Date().getDay()
 }: ChildToggleProps) {
   const colors = getColorClasses(child.color || 'blue');
-  const completedTasks = child.taskAssignments.filter(t => t.completions?.[`${t.id}-${selectedDay}`]).length;
+  const completedTasks = child.taskAssignments.filter(t => t.completions?.[getCompletionDateKey(selectedDay)]).length;
   const totalTasks = child.taskAssignments.filter(t => t.days.includes(selectedDay)).length;
 
   const content = (

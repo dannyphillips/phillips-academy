@@ -44,8 +44,15 @@ export function App() {
     
     if (!child || !assignment) return;
 
+    // Calculate the date for this completion
+    const today = new Date();
+    const currentWeekStart = new Date(today);
+    currentWeekStart.setDate(today.getDate() - today.getDay()); // Get start of week (Sunday)
+    const completionDate = new Date(currentWeekStart);
+    completionDate.setDate(currentWeekStart.getDate() + dayIndex);
+    const completionKey = completionDate.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+
     // Get the current completion state for this specific day
-    const completionKey = `${assignmentId}-${dayIndex}`;
     const isCurrentlyCompleted = assignment.completions?.[completionKey] || false;
     const newCompleted = !isCurrentlyCompleted;
 

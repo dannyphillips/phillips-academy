@@ -224,7 +224,14 @@ export const updateTaskCompletion = async (
     }
     
     const assignment = assignmentDoc.data() as FirestoreTaskAssignment;
-    const completionKey = `${assignmentId}-${dayIndex}`;
+    
+    // Calculate the date for this completion
+    const today = new Date();
+    const currentWeekStart = new Date(today);
+    currentWeekStart.setDate(today.getDate() - today.getDay()); // Get start of week (Sunday)
+    const completionDate = new Date(currentWeekStart);
+    completionDate.setDate(currentWeekStart.getDate() + dayIndex);
+    const completionKey = completionDate.toISOString().split('T')[0]; // Format: YYYY-MM-DD
 
     // Update both documents in parallel
     await Promise.all([

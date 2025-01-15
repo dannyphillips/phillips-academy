@@ -8,6 +8,16 @@ import { ChildToggle } from './ChildToggle';
 import { TaskGroup } from './TaskGroup';
 import { availableIcons } from '../data/taskTemplates';
 
+// Helper function to get the completion date key for a given day index
+function getCompletionDateKey(dayIndex: number): string {
+  const today = new Date();
+  const currentWeekStart = new Date(today);
+  currentWeekStart.setDate(today.getDate() - today.getDay()); // Get start of week (Sunday)
+  const completionDate = new Date(currentWeekStart);
+  completionDate.setDate(currentWeekStart.getDate() + dayIndex);
+  return completionDate.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+}
+
 interface ChildWeekViewProps {
   children: Child[];
   handleTaskComplete: (childId: string, taskId: string, day: number) => void;
@@ -104,9 +114,9 @@ export function ChildWeekView({ children, handleTaskComplete, daysOfWeek, curren
                                 <button
                                   onClick={() => handleTaskComplete(child.id, assignment.id, dayIndex)}
                                   className={`w-6 h-6 rounded-full flex items-center justify-center transition-all
-                                    ${assignment.completions?.[`${assignment.id}-${dayIndex}`] ? `${colors.bg} text-white` : 'bg-white border-2 ' + colors.muted}`}
+                                    ${assignment.completions?.[getCompletionDateKey(dayIndex)] ? `${colors.bg} text-white` : 'bg-white border-2 ' + colors.muted}`}
                                 >
-                                  {assignment.completions?.[`${assignment.id}-${dayIndex}`] && <Check className="w-3 h-3" />}
+                                  {assignment.completions?.[getCompletionDateKey(dayIndex)] && <Check className="w-3 h-3" />}
                                 </button>
                               )}
                             </div>
