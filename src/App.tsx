@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Lock, LockOpen, CalendarDays, ListTodo, Loader2 } from "lucide-react";
+import { Lock, LockOpen, CalendarDays, ListTodo, Loader2, Trophy } from "lucide-react";
 import { Child } from "./types/types";
 import { ChildDayView } from "./components/ChildDayView";
 import { ChildWeekView } from "./components/ChildWeekView";
@@ -131,12 +131,25 @@ export function App() {
               {isParentUser() ? (
                 <>
                   <LockOpen className="w-5 h-5" />
-                  <span>Parent Mode</span>
+                  <span>Go to Child Mode</span>
                 </>
               ) : (
-                <Lock className="w-5 h-5" />
+                <>
+                  <Lock className="w-5 h-5" />
+                  <span>Go to Parent Mode</span>
+                </>
               )}
             </button>
+          </div>
+
+          {/* Combined Score Display */}
+          <div className="flex justify-center">
+            <div className="bg-white rounded-lg shadow-md p-4 flex items-center gap-2">
+              <Trophy className="w-6 h-6 text-farmhouse-clay" />
+              <span className="text-2xl font-bold text-farmhouse-navy">
+                {children.reduce((total, child) => total + (child.totalPoints || 0), 0)} Points
+              </span>
+            </div>
           </div>
 
           {/* View Toggle */}
