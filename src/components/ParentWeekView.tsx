@@ -7,6 +7,8 @@ import { ChildToggle } from './ChildToggle';
 import { TaskGroup } from './TaskGroup';
 import { availableIcons } from '../data/taskTemplates';
 import React from 'react';
+import { SortSelect } from './SortSelect';
+import { sortTaskDefinitions, TaskSortOption, SortDirection } from '../utils/sortUtils';
 
 interface ParentWeekViewProps {
   children: Child[];
@@ -24,6 +26,21 @@ export function ParentWeekView({ children, setChildren, daysOfWeek, currentDay, 
     children.map((child) => child.id)
   );
 
+  // Sort state
+  const [sortField, setSortField] = useState<TaskSortOption>('name');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+
+  const sortOptions = [
+    { value: 'name', label: 'Name' },
+    { value: 'points', label: 'Points' },
+    { value: 'type', label: 'Type' },
+  ];
+
+  const handleSortChange = (field: string, direction: SortDirection) => {
+    setSortField(field as TaskSortOption);
+    setSortDirection(direction);
+  };
+
   const toggleChildVisibility = (childId: string) => {
     setVisibleChildren((prev) =>
       prev.includes(childId)
@@ -36,13 +53,22 @@ export function ParentWeekView({ children, setChildren, daysOfWeek, currentDay, 
     <div className="space-y-8">
       <header className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-farmhouse-navy">Weekly Schedule</h1>
-        <button
-          onClick={() => openTaskEditor()}
-          className="primary-button"
-        >
-          <Plus className="w-4 h-4" />
-          New Task
-        </button>
+        <div className="flex items-center gap-4">
+          <SortSelect
+            options={sortOptions}
+            value={sortField}
+            direction={sortDirection}
+            onSortChange={handleSortChange}
+            placeholder="Sort tasks by..."
+          />
+          <button
+            onClick={() => openTaskEditor()}
+            className="primary-button"
+          >
+            <Plus className="w-4 h-4" />
+            New Task
+          </button>
+        </div>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -73,9 +99,16 @@ export function ParentWeekView({ children, setChildren, daysOfWeek, currentDay, 
           <div className="space-y-6">
             {TASK_TYPES.map((type) => (
               <TaskGroup key={type} type={type} className="space-y-2">
-                {uniqueTaskDefinitions
-                  .filter((uniqueTask) => uniqueTask.definition.type === type)
-                  .map(({ definition, assignedChildIds }) => {
+                {sortTaskDefinitions(
+                  uniqueTaskDefinitions
+                    .filter((uniqueTask) => uniqueTask.definition.type === type)
+                    .map(({ definition }) => definition),
+                  sortField,
+                  sortDirection
+                ).map((definition) => {
+                  const assignedChildIds = uniqueTaskDefinitions.find(
+                    utd => utd.definition.id === definition.id
+                  )?.assignedChildIds || [];
                     const assignedChildren = children.filter((child) =>
                       assignedChildIds.includes(child.id)
                     );

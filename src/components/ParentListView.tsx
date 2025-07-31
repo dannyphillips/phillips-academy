@@ -9,6 +9,8 @@ import { ConfirmModal } from './ConfirmModal';
 import { deleteTaskDefinition } from '../services/database';
 import { availableIcons } from '../data/taskTemplates';
 import { useState } from 'react';
+import { SortSelect } from './SortSelect';
+import { sortTaskDefinitions, TaskSortOption, SortDirection } from '../utils/sortUtils';
 
 interface ParentListViewProps {
   children: Child[];
@@ -26,6 +28,21 @@ export function ParentListView({ children, openTaskEditor, onEditChild, setChild
     taskDefinitionId?: string;
     taskTitle?: string;
   }>({ isOpen: false });
+
+  // Sort state
+  const [sortField, setSortField] = useState<TaskSortOption>('name');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+
+  const sortOptions = [
+    { value: 'name', label: 'Name' },
+    { value: 'points', label: 'Points' },
+    { value: 'type', label: 'Type' },
+  ];
+
+  const handleSortChange = (field: string, direction: SortDirection) => {
+    setSortField(field as TaskSortOption);
+    setSortDirection(direction);
+  };
 
   const handleDeleteTask = async (taskDefinitionId: string) => {
     try {
@@ -69,13 +86,27 @@ export function ParentListView({ children, openTaskEditor, onEditChild, setChild
         ))}
       </div>
 
+      {/* Sort Controls */}
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-semibold text-farmhouse-navy">Tasks</h2>
+        <SortSelect
+          options={sortOptions}
+          value={sortField}
+          direction={sortDirection}
+          onSortChange={handleSortChange}
+          placeholder="Sort tasks by..."
+        />
+      </div>
+
       {/* Tasks Section */}
       {TASK_TYPES.map((type) => (
         <TaskGroup key={type} type={type} className="space-y-4">
           <div className="bg-white rounded-lg border border-farmhouse-beige divide-y divide-farmhouse-beige">
-            {taskDefinitions
-              .filter((definition) => definition.type === type)
-              .map((definition) => {
+            {sortTaskDefinitions(
+              taskDefinitions.filter((definition) => definition.type === type),
+              sortField,
+              sortDirection
+            ).map((definition) => {
                 // Find all children that have this task assigned
                 const assignedChildren = children.filter((child) =>
                   child.taskAssignments.some(assignment => 

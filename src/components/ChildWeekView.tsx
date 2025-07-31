@@ -7,6 +7,8 @@ import { TASK_TYPES } from '../constants/taskTypes';
 import { ChildToggle } from './ChildToggle';
 import { TaskGroup } from './TaskGroup';
 import { availableIcons } from '../data/taskTemplates';
+import { SortSelect } from './SortSelect';
+import { sortTaskAssignments, TaskSortOption, SortDirection } from '../utils/sortUtils';
 
 // Helper function to get the completion date key for a given day index
 function getCompletionDateKey(dayIndex: number): string {
@@ -30,6 +32,22 @@ export function ChildWeekView({ children, handleTaskComplete, daysOfWeek, curren
     children.map((child) => child.id)
   );
 
+  // Sort state
+  const [sortField, setSortField] = useState<TaskSortOption>('name');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+
+  const sortOptions = [
+    { value: 'name', label: 'Name' },
+    { value: 'points', label: 'Points' },
+    { value: 'type', label: 'Type' },
+    { value: 'completion', label: 'Completion' },
+  ];
+
+  const handleSortChange = (field: string, direction: SortDirection) => {
+    setSortField(field as TaskSortOption);
+    setSortDirection(direction);
+  };
+
   const toggleChildVisibility = (childId: string) => {
     setVisibleChildren((prev) =>
       prev.includes(childId)
@@ -42,6 +60,13 @@ export function ChildWeekView({ children, handleTaskComplete, daysOfWeek, curren
     <div className="space-y-8">
       <header className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-farmhouse-navy">Family Weekly Schedule</h1>
+        <SortSelect
+          options={sortOptions}
+          value={sortField}
+          direction={sortDirection}
+          onSortChange={handleSortChange}
+          placeholder="Sort tasks by..."
+        />
       </header>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {children.map((child) => (
@@ -79,10 +104,20 @@ export function ChildWeekView({ children, handleTaskComplete, daysOfWeek, curren
                     .map(assignment => ({ assignment, child }))
                 );
 
+              // Sort the tasks
+              const sortedTasks = sortTaskAssignments(
+                tasksOfType.map(({ assignment }) => assignment),
+                sortField,
+                sortDirection
+              );
+
               return (
                 <TaskGroup key={type} type={type}>
                   <div className="space-y-2">
-                    {tasksOfType.map(({ assignment, child }) => {
+                    {sortedTasks.map((assignment) => {
+                      const child = children.find(c => 
+                        c.taskAssignments.some(a => a.id === assignment.id)
+                      )!;
                       const colors = getColorClasses(child.color || 'blue');
                       const Icon = availableIcons[assignment.definition.icon];
                       return (
