@@ -6,6 +6,8 @@ import { TASK_TYPES, getTaskTypeDisplayName, TaskType } from '../constants/taskT
 import { ChildToggle } from './ChildToggle';
 import { TaskGroup } from './TaskGroup';
 import { availableIcons } from '../data/taskTemplates';
+import { SortSelect } from './SortSelect';
+import { sortTaskAssignments, TaskSortOption, SortDirection } from '../utils/sortUtils';
 
 // Helper function to get the completion date key for a given day index
 function getCompletionDateKey(dayIndex: number): string {
@@ -36,6 +38,22 @@ export function ChildDayView({
   daysOfWeek,
   handleTaskComplete
 }: ChildDayViewProps) {
+  // Sort state
+  const [sortField, setSortField] = React.useState<TaskSortOption>('name');
+  const [sortDirection, setSortDirection] = React.useState<SortDirection>('asc');
+
+  const sortOptions = [
+    { value: 'name', label: 'Name' },
+    { value: 'points', label: 'Points' },
+    { value: 'type', label: 'Type' },
+    { value: 'completion', label: 'Completion' },
+  ];
+
+  const handleSortChange = (field: string, direction: SortDirection) => {
+    setSortField(field as TaskSortOption);
+    setSortDirection(direction);
+  };
+
   if (children.length === 0) {
     return <div>No children found</div>;
   }
@@ -62,18 +80,27 @@ export function ChildDayView({
         ))}
       </div>
 
-      <div className="flex gap-2">
-        {daysOfWeek.map((day, index) => (
-          <button
-            key={day}
-            onClick={() => setSelectedDay(index)}
-            className={`day-button ${
-              index === selectedDay ? `${colors.bg} text-white` : 'day-button-inactive'
-            }`}
-          >
-            {day[0]}
-          </button>
-        ))}
+      <div className="flex justify-between items-center">
+        <div className="flex gap-2">
+          {daysOfWeek.map((day, index) => (
+            <button
+              key={day}
+              onClick={() => setSelectedDay(index)}
+              className={`day-button ${
+                index === selectedDay ? `${colors.bg} text-white` : 'day-button-inactive'
+              }`}
+            >
+              {day[0]}
+            </button>
+          ))}
+        </div>
+        <SortSelect
+          options={sortOptions}
+          value={sortField}
+          direction={sortDirection}
+          onSortChange={handleSortChange}
+          placeholder="Sort tasks by..."
+        />
       </div>
 
       <div className="space-y-4">
@@ -82,10 +109,13 @@ export function ChildDayView({
             assignment => assignment.definition.type === type && assignment.days.includes(selectedDay)
           );
 
+          // Sort the tasks
+          const sortedTasks = sortTaskAssignments(tasksOfType, sortField, sortDirection);
+
           return (
             <TaskGroup key={type} type={type}>
               <div className="space-y-2">
-                {tasksOfType.map((assignment) => {
+                {sortedTasks.map((assignment) => {
                   const Icon = availableIcons[assignment.definition.icon];
                   return (
                     <div

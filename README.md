@@ -14,6 +14,7 @@ Phillips Academy Task Manager is a specialized task management application desig
 - 👨‍👩‍👧‍👦 Separate parent and child interfaces
 - 📅 Daily and weekly task views
 - ✅ Task completion tracking
+- 🔄 Sorting functionality for tasks and skills
 - 🎨 Modern, clean interface with Tailwind CSS
 
 ## Usage
@@ -23,12 +24,14 @@ Phillips Academy Task Manager is a specialized task management application desig
 2. Create and assign tasks for your children
 3. Monitor task completion and progress
 4. View both list and weekly calendar views
+5. Sort tasks by name, points, or type for better organization
 
 ### For Children
 1. Access your personal dashboard
 2. View assigned tasks for the day or week
 3. Mark tasks as complete
 4. Track your progress through different view options
+5. Sort tasks by name, points, type, or completion status
 
 ## Developer Setup
 

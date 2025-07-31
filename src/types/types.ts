@@ -68,3 +68,36 @@ export interface UniqueTaskDefinition {
   definition: TaskDefinition;
   assignedChildIds: string[];
 } 
+
+export interface ChildSkill {
+  childId: string;
+  skillId: string;
+  isCompleted: boolean;
+  completedAt?: Date;
+  startedAt: Date;
+  notes?: string;
+  // New progress tracking fields
+  progressType: 'boolean' | 'counter';
+  targetValue?: number; // For counter-based skills
+  currentValue?: number; // For counter-based skills
+  progressHistory?: ProgressEntry[]; // Track progress over time
+}
+
+export interface ProgressEntry {
+  date: Date;
+  value: number;
+  notes?: string;
+}
+
+export interface SkillProgress {
+  skillId: string;
+  isCompleted: boolean;
+  completedAt?: Date;
+  startedAt: Date;
+  notes?: string;
+  progressType: 'boolean' | 'counter';
+  targetValue?: number;
+  currentValue?: number;
+  progressHistory?: ProgressEntry[];
+  skill: any; // Will be imported from skills.ts
+} 
