@@ -6,6 +6,7 @@ import { ChildWeekView } from "./components/ChildWeekView";
 import { ParentView } from "./components/ParentView";
 import { SkillsView } from "./components/SkillsView";
 import { ModeToggle } from "./components/ModeToggle";
+import { ChildToggle } from "./components/ChildToggle";
 import { logout, isParentUser } from "./components/Auth";
 import { useNavigate } from "react-router-dom";
 import { 
@@ -312,6 +313,22 @@ export function App() {
               </span>
             </div>
           </div>
+
+          {/* Child Toggles - Show for both tasks and skills */}
+          {children.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {children.map((child, index) => (
+                <ChildToggle
+                  key={child.id}
+                  child={child}
+                  isVisible={index === activeChild}
+                  onToggleVisibility={() => handleChildChange(index)}
+                  showStats={true}
+                  selectedDay={selectedDay}
+                />
+              ))}
+            </div>
+          )}
 
           {/* Mode Toggle */}
           <ModeToggle mode={mode} onModeChange={setMode} />

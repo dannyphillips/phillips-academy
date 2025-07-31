@@ -590,6 +590,21 @@ export async function updateChildSkill(
   updates: Partial<Omit<ChildSkill, 'id' | 'childId' | 'skillId'>>
 ): Promise<void> {
   try {
+    // First, find the document by skillId and childId
+    const skillsSnapshot = await getDocs(
+      query(
+        collection(db, CHILD_SKILLS_COLLECTION), 
+        where('skillId', '==', skillId)
+      )
+    );
+    
+    if (skillsSnapshot.empty) {
+      throw new Error(`Skill document not found for skillId: ${skillId}`);
+    }
+    
+    // Get the first matching document (should be unique per child-skill combination)
+    const skillDoc = skillsSnapshot.docs[0];
+    
     const validUpdates = Object.entries(updates).reduce((acc, [key, value]) => {
       if (value !== undefined) {
         acc[key] = value;
@@ -597,7 +612,7 @@ export async function updateChildSkill(
       return acc;
     }, {} as Record<string, any>);
 
-    await updateDoc(doc(db, CHILD_SKILLS_COLLECTION, skillId), validUpdates);
+    await updateDoc(skillDoc.ref, validUpdates);
   } catch (error) {
     console.error('Error updating child skill:', error);
     throw error;
@@ -629,13 +644,19 @@ export async function updateSkillProgress(
   notes?: string
 ): Promise<void> {
   try {
-    const skillRef = doc(db, CHILD_SKILLS_COLLECTION, skillId);
-    const skillDoc = await getDoc(skillRef);
+    // Find the skill document by skillId
+    const skillsSnapshot = await getDocs(
+      query(
+        collection(db, CHILD_SKILLS_COLLECTION), 
+        where('skillId', '==', skillId)
+      )
+    );
     
-    if (!skillDoc.exists()) {
-      throw new Error('Skill not found');
+    if (skillsSnapshot.empty) {
+      throw new Error(`Skill document not found for skillId: ${skillId}`);
     }
     
+    const skillDoc = skillsSnapshot.docs[0];
     const skillData = skillDoc.data();
     const currentValue = skillData.currentValue || 0;
     const targetValue = skillData.targetValue;
@@ -660,7 +681,7 @@ export async function updateSkillProgress(
       completedAt: isCompleted ? new Date() : skillData.completedAt
     };
     
-    await updateChildSkill(skillId, updates);
+    await updateDoc(skillDoc.ref, updates);
   } catch (error) {
     console.error('Error updating skill progress:', error);
     throw error;
@@ -674,18 +695,45 @@ export async function incrementSkillProgress(
   notes?: string
 ): Promise<void> {
   try {
-    const skillRef = doc(db, CHILD_SKILLS_COLLECTION, skillId);
-    const skillDoc = await getDoc(skillRef);
+    // Find the skill document by skillId
+    const skillsSnapshot = await getDocs(
+      query(
+        collection(db, CHILD_SKILLS_COLLECTION), 
+        where('skillId', '==', skillId)
+      )
+    );
     
-    if (!skillDoc.exists()) {
-      throw new Error('Skill not found');
+    if (skillsSnapshot.empty) {
+      throw new Error(`Skill document not found for skillId: ${skillId}`);
     }
     
+    const skillDoc = skillsSnapshot.docs[0];
     const skillData = skillDoc.data();
     const currentValue = skillData.currentValue || 0;
     const newValue = currentValue + increment;
     
-    await updateSkillProgress(skillId, newValue, notes);
+    // Add new progress entry
+    const newEntry = {
+      date: new Date(),
+      value: newValue,
+      notes
+    };
+    
+    const progressHistory = skillData.progressHistory || [];
+    const updatedHistory = [...progressHistory, newEntry];
+    
+    // Check if skill is completed
+    const targetValue = skillData.targetValue;
+    const isCompleted = targetValue ? newValue >= targetValue : false;
+    
+    const updates: Partial<ChildSkill> = {
+      currentValue: newValue,
+      progressHistory: updatedHistory,
+      isCompleted,
+      completedAt: isCompleted ? new Date() : skillData.completedAt
+    };
+    
+    await updateDoc(skillDoc.ref, updates);
   } catch (error) {
     console.error('Error incrementing skill progress:', error);
     throw error;
@@ -695,7 +743,21 @@ export async function incrementSkillProgress(
 // Delete a child skill
 export async function deleteChildSkill(skillId: string): Promise<void> {
   try {
-    await deleteDoc(doc(db, CHILD_SKILLS_COLLECTION, skillId));
+    // Find the skill document by skillId
+    const skillsSnapshot = await getDocs(
+      query(
+        collection(db, CHILD_SKILLS_COLLECTION), 
+        where('skillId', '==', skillId)
+      )
+    );
+    
+    if (skillsSnapshot.empty) {
+      throw new Error(`Skill document not found for skillId: ${skillId}`);
+    }
+    
+    // Get the first matching document and delete it
+    const skillDoc = skillsSnapshot.docs[0];
+    await deleteDoc(skillDoc.ref);
   } catch (error) {
     console.error('Error deleting child skill:', error);
     throw error;
