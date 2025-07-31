@@ -9,8 +9,8 @@ import { ModeToggle } from "./components/ModeToggle";
 import { logout, isParentUser } from "./components/Auth";
 import { useNavigate } from "react-router-dom";
 import { 
-  getChildren, 
-  updateTaskCompletion, 
+  getChildrenWithTasks, 
+  updateTaskCompletion,
   getAllChildSkills, 
   addChildSkill, 
   toggleSkillCompletion,
@@ -50,7 +50,7 @@ export function App() {
       try {
         // Load children and skills in parallel
         const [loadedChildren, loadedSkills] = await Promise.all([
-          getChildren(),
+          getChildrenWithTasks(),
           getAllChildSkills()
         ]);
         

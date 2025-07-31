@@ -91,7 +91,7 @@ const convertFirestoreDataToChild = async (
   };
 };
 
-// Get all children with their task assignments and definitions
+// Get all children with their task assignments and definitions (bulk operation)
 export async function getChildren(): Promise<Child[]> {
   return deduplicateRequest('getChildren', async () => {
     try {
@@ -110,6 +110,122 @@ export async function getChildren(): Promise<Child[]> {
       throw error;
     }
   });
+}
+
+// Get all task assignments for all children (bulk operation)
+export async function getAllTaskAssignments(): Promise<(TaskAssignment & { definition: TaskDefinition })[]> {
+  try {
+    const assignmentsSnapshot = await getDocs(collection(db, TASK_ASSIGNMENTS_COLLECTION));
+    const taskAssignments: (TaskAssignment & { definition: TaskDefinition })[] = [];
+
+    for (const assignmentDoc of assignmentsSnapshot.docs) {
+      const assignment = {
+        id: assignmentDoc.id,
+        ...assignmentDoc.data()
+      } as TaskAssignment;
+
+      // Get the task definition
+      const definitionDoc = await getDoc(doc(db, TASK_DEFINITIONS_COLLECTION, assignment.taskDefinitionId));
+      if (definitionDoc.exists()) {
+        const definition = {
+          id: definitionDoc.id,
+          ...definitionDoc.data()
+        } as TaskDefinition;
+
+        taskAssignments.push({
+          ...assignment,
+          definition
+        });
+      }
+    }
+
+    return taskAssignments;
+  } catch (error) {
+    console.error('Error getting all task assignments:', error);
+    throw error;
+  }
+}
+
+// Get all children with their task assignments and definitions (optimized bulk version)
+export async function getChildrenWithTasks(): Promise<Child[]> {
+  try {
+    // Get children and task assignments in parallel
+    const [childrenSnapshot, assignmentsSnapshot] = await Promise.all([
+      getDocs(collection(db, CHILDREN_COLLECTION)),
+      getDocs(collection(db, TASK_ASSIGNMENTS_COLLECTION))
+    ]);
+
+    // Get all task definitions in parallel
+    const taskDefinitionIds = new Set<string>();
+    assignmentsSnapshot.docs.forEach(doc => {
+      const assignment = doc.data() as FirestoreTaskAssignment;
+      taskDefinitionIds.add(assignment.taskDefinitionId);
+    });
+
+    const taskDefinitions = new Map<string, TaskDefinition>();
+    if (taskDefinitionIds.size > 0) {
+      const definitionPromises = Array.from(taskDefinitionIds).map(async (definitionId) => {
+        const definitionDoc = await getDoc(doc(db, TASK_DEFINITIONS_COLLECTION, definitionId));
+        if (definitionDoc.exists()) {
+          const definition = {
+            id: definitionDoc.id,
+            ...definitionDoc.data()
+          } as TaskDefinition;
+          return { id: definitionId, definition };
+        }
+        return null;
+      });
+
+      const definitionResults = await Promise.all(definitionPromises);
+      definitionResults.forEach(result => {
+        if (result) {
+          taskDefinitions.set(result.id, result.definition);
+        }
+      });
+    }
+
+    // Build task assignments map
+    const taskAssignmentsMap = new Map<string, (TaskAssignment & { definition: TaskDefinition })[]>();
+    assignmentsSnapshot.docs.forEach(doc => {
+      const assignment = {
+        id: doc.id,
+        ...doc.data()
+      } as TaskAssignment;
+
+      const definition = taskDefinitions.get(assignment.taskDefinitionId);
+      if (definition) {
+        const assignmentWithDefinition = {
+          ...assignment,
+          definition
+        };
+
+        const childAssignments = taskAssignmentsMap.get(assignment.childId) || [];
+        childAssignments.push(assignmentWithDefinition);
+        taskAssignmentsMap.set(assignment.childId, childAssignments);
+      }
+    });
+
+    // Build children with their task assignments
+    const children: Child[] = [];
+    for (const doc of childrenSnapshot.docs) {
+      const childData = doc.data() as FirestoreChild;
+      const taskAssignments = taskAssignmentsMap.get(doc.id) || [];
+      
+      children.push({
+        id: doc.id,
+        name: childData.name,
+        age: childData.age,
+        color: childData.color,
+        totalPoints: childData.totalPoints,
+        taskAssignments
+      });
+    }
+
+    return children;
+  } catch (error) {
+    console.error('Error getting children with tasks:', error);
+    throw error;
+  }
 }
 
 // Get all task definitions
