@@ -6,7 +6,7 @@ import { ChildWeekView } from "./components/ChildWeekView";
 import { ParentView } from "./components/ParentView";
 import { logout, isParentUser } from "./components/Auth";
 import { useNavigate } from "react-router-dom";
-import { getChildren, updateTaskCompletion } from "./services/database";
+import { getChildrenWithTasks, updateTaskCompletion } from "./services/database";
 
 export function App() {
   const navigate = useNavigate();
@@ -26,7 +26,8 @@ export function App() {
   useEffect(() => {
     const loadChildren = async () => {
       try {
-        const loadedChildren = await getChildren();
+        // Use the bulk endpoint to get all children with their tasks in one request
+        const loadedChildren = await getChildrenWithTasks();
         setChildren(loadedChildren);
       } catch (error) {
         console.error('Error loading children:', error);
