@@ -280,7 +280,7 @@ export function App() {
         <div className="flex flex-col gap-6">
           <div className="flex justify-between items-center">
             <img 
-              src="/phillips-academy/assets/logo-circle-crop.png" 
+              src="/assets/logo-circle-crop.png" 
               alt="Phillips Homeschool Academy" 
               className="h-24 w-auto object-contain"
             />
