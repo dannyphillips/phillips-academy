@@ -79,7 +79,7 @@ export function ChildToggle({
 
   const cardClasses = `rounded-lg transition-all border-2 ${colors.bg.replace('bg-', 'border-')} ${
     onToggleVisibility 
-      ? `${colors.bg} ${!isVisible ? 'bg-opacity-25' : ''}`
+      ? `${colors.bg} ${!isVisible ? 'opacity-25' : ''}`
       : `${colors.bg} shadow-md hover:shadow-lg`
   }`;
 

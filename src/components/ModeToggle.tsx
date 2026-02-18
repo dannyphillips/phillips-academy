@@ -5,7 +5,7 @@ interface ModeToggleProps {
   onModeChange: (mode: 'tasks' | 'skills') => void;
 }
 
-export const ModeToggle: React.FC<ModeToggleProps> = ({ mode, onModeChange }) => {
+export const ModeToggle = ({ mode, onModeChange }: ModeToggleProps) => {
   return (
     <div className="flex items-center justify-center mb-6">
       <div className="bg-gray-100 rounded-lg p-1 flex">

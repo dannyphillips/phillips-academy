@@ -1,6 +1,33 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  /* Farmhouse color palette */
+  --color-farmhouse-sage: #87A878;
+  --color-farmhouse-clay: #B47E5F;
+  --color-farmhouse-teal: #4A7B7C;
+  --color-farmhouse-dusty-blue: #8BA0B5;
+  --color-farmhouse-moss: #6B7F59;
+  --color-farmhouse-stone: #8F8B83;
+  --color-farmhouse-rust: #A65D57;
+  --color-farmhouse-slate: #6E7C8C;
+  --color-farmhouse-olive: #767E4E;
+  --color-farmhouse-taupe: #8B7E74;
+  --color-farmhouse-plum: #7D6B7D;
+  --color-farmhouse-sienna: #9C6B4E;
+  --color-farmhouse-linen: #EAE1D0;
+  --color-farmhouse-beige: #E6DFD3;
+  --color-farmhouse-brown: #786F69;
+  --color-farmhouse-accent: #D4B595;
+  --color-farmhouse-navy: #34435E;
+  /* Primary app background */
+  --color-farmhouse-cream: #F5F1EA;
+
+  /* Custom border radius */
+  --radius-lg: 0.75rem;
+
+  /* Custom animations */
+  --animate-spin-slow: spin 3s linear infinite;
+}
 
 body {
   @apply bg-farmhouse-cream;

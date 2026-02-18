@@ -14,14 +14,14 @@ interface SkillProgressModalProps {
   onToggleCompletion: (skillId: string, isCompleted: boolean) => Promise<void>;
 }
 
-export const SkillProgressModal: React.FC<SkillProgressModalProps> = ({
+export const SkillProgressModal = ({
   isOpen,
   onClose,
   childSkill,
   skill,
   onUpdateProgress,
   onToggleCompletion
-}) => {
+}: SkillProgressModalProps) => {
   const [progressValue, setProgressValue] = useState(childSkill.currentValue || 0);
   const [notes, setNotes] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
@@ -74,7 +74,7 @@ export const SkillProgressModal: React.FC<SkillProgressModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           {/* Header */}

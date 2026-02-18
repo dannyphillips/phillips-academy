@@ -31,7 +31,7 @@ export function AddChildModal({ isOpen, onClose, onSave }: AddChildModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
       <div className="bg-white rounded-lg w-full max-w-md p-6 space-y-6">
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-semibold text-farmhouse-navy">

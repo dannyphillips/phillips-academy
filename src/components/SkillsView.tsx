@@ -17,13 +17,13 @@ interface SkillsViewProps {
   onUpdateSkillProgress: (skillId: string, newValue: number, notes?: string) => Promise<void>;
 }
 
-export const SkillsView: React.FC<SkillsViewProps> = ({
+export const SkillsView = ({
   selectedChild,
   childSkills,
   onSkillToggle,
   onSkillAdd,
   onUpdateSkillProgress
-}) => {
+}: SkillsViewProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<SkillCategory | 'all'>('all');
   const [showCompleted, setShowCompleted] = useState(true);
