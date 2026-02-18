@@ -3,7 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <script type="text/javascript">
-      // Redirect bare root to app base path
+      // On custom domain (base=/), redirect bare root to the app
+      // On GitHub Pages (base=/phillips-academy/), this never fires since pathname != '/'
       if (window.location.pathname === '/') {
         window.location.replace('/phillips-academy/');
       }

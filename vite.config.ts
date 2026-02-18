@@ -4,7 +4,8 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-    base: '/',
+    // Use /phillips-academy/ for GitHub Pages, / for custom domain (set via VITE_BASE_PATH env var)
+    base: process.env.VITE_BASE_PATH ?? '/',
     publicDir: 'public',
     build: {
         outDir: 'dist',
