@@ -1,12 +1,14 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from "react";
 import { Lock, LockOpen, CalendarDays, ListTodo, Loader2, Trophy } from "lucide-react";
 import { Child, ChildSkill } from "./types/types";
-import { ChildDayView } from "./components/ChildDayView";
-import { ChildWeekView } from "./components/ChildWeekView";
-import { ParentView } from "./components/ParentView";
-import { SkillsView } from "./components/SkillsView";
-import { ModeToggle } from "./components/ModeToggle";
 import { ChildToggle } from "./components/ChildToggle";
+import { ModeToggle } from "./components/ModeToggle";
+import { getSkillById } from "./data/skills";
+
+const ChildDayView = lazy(() => import("./components/ChildDayView").then(m => ({ default: m.ChildDayView })));
+const ChildWeekView = lazy(() => import("./components/ChildWeekView").then(m => ({ default: m.ChildWeekView })));
+const ParentView = lazy(() => import("./components/ParentView").then(m => ({ default: m.ParentView })));
+const SkillsView = lazy(() => import("./components/SkillsView").then(m => ({ default: m.SkillsView })));
 import { logout, isParentUser } from "./components/Auth";
 import { useNavigate } from "react-router-dom";
 import { 
@@ -166,7 +168,6 @@ export function App() {
     
     try {
       // Get the skill definition to set proper progress configuration
-      const { getSkillById } = await import('./data/skills');
       const skillDefinition = getSkillById(skillId);
       
       if (!skillDefinition) {
@@ -355,54 +356,56 @@ export function App() {
             </div>
           )}
 
-          {isParentUser() ? (
-            mode === 'tasks' ? (
-              <ParentView
-                children={children}
-                setChildren={setChildren}
-                daysOfWeek={daysOfWeek}
-                currentDay={currentDay}
-                view={view}
-              />
-            ) : (
-              <SkillsView
-                selectedChild={selectedChild}
-                childSkills={childSkills}
-                onSkillToggle={handleSkillToggle}
-                onSkillAdd={handleSkillAdd}
-                onUpdateSkillProgress={handleUpdateSkillProgress}
-              />
-            )
-          ) : (
-            mode === 'tasks' ? (
-              view === 'day' ? (
-                <ChildDayView
+          <Suspense fallback={<div className="flex items-center justify-center p-8"><Loader2 className="w-6 h-6 animate-spin text-farmhouse-navy" /></div>}>
+            {isParentUser() ? (
+              mode === 'tasks' ? (
+                <ParentView
                   children={children}
-                  activeChild={activeChild}
-                  setActiveChild={handleChildChange}
-                  selectedDay={selectedDay}
-                  setSelectedDay={setSelectedDay}
-                  daysOfWeek={daysOfWeek}
-                  handleTaskComplete={handleTaskComplete}
-                />
-              ) : (
-                <ChildWeekView
-                  children={children}
-                  handleTaskComplete={handleTaskComplete}
+                  setChildren={setChildren}
                   daysOfWeek={daysOfWeek}
                   currentDay={currentDay}
+                  view={view}
+                />
+              ) : (
+                <SkillsView
+                  selectedChild={selectedChild}
+                  childSkills={childSkills}
+                  onSkillToggle={handleSkillToggle}
+                  onSkillAdd={handleSkillAdd}
+                  onUpdateSkillProgress={handleUpdateSkillProgress}
                 />
               )
             ) : (
-              <SkillsView
-                selectedChild={selectedChild}
-                childSkills={childSkills}
-                onSkillToggle={handleSkillToggle}
-                onSkillAdd={handleSkillAdd}
-                onUpdateSkillProgress={handleUpdateSkillProgress}
-              />
-            )
-          )}
+              mode === 'tasks' ? (
+                view === 'day' ? (
+                  <ChildDayView
+                    children={children}
+                    activeChild={activeChild}
+                    setActiveChild={handleChildChange}
+                    selectedDay={selectedDay}
+                    setSelectedDay={setSelectedDay}
+                    daysOfWeek={daysOfWeek}
+                    handleTaskComplete={handleTaskComplete}
+                  />
+                ) : (
+                  <ChildWeekView
+                    children={children}
+                    handleTaskComplete={handleTaskComplete}
+                    daysOfWeek={daysOfWeek}
+                    currentDay={currentDay}
+                  />
+                )
+              ) : (
+                <SkillsView
+                  selectedChild={selectedChild}
+                  childSkills={childSkills}
+                  onSkillToggle={handleSkillToggle}
+                  onSkillAdd={handleSkillAdd}
+                  onUpdateSkillProgress={handleUpdateSkillProgress}
+                />
+              )
+            )}
+          </Suspense>
           </div>
       </div>
     </div>

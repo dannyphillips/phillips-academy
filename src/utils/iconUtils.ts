@@ -1,11 +1,97 @@
 import React from 'react';
-import * as LucideIcons from 'lucide-react';
+import {
+  Droplets, Hand, Zap, Circle, Scissors, Phone, Home, Car, Shield,
+  Gift, Clock, Heart, Trash2, Palette, Square, Hash, Type, PenTool,
+  BookOpen, Plus, Briefcase, Book, PiggyBank, X, Utensils, Shirt,
+  Bike, Waves, Monitor, Mail, Calculator, ChefHat, Sprout, HeartPulse,
+  Map, Mic, Code, Camera, Music, Crown, Star, Footprints, Syringe,
+  Bed, Flame
+} from 'lucide-react';
+
+// Explicit map of icons used in skill badges — avoids importing the entire lucide library
+const ICON_MAP: Record<string, React.ComponentType<{ size?: number }>> = {
+  droplets: Droplets,
+  hand: Hand,
+  zap: Zap,
+  circle: Circle,
+  scissors: Scissors,
+  shoe: Footprints,
+  Phone: Phone,
+  phone: Phone,
+  Home: Home,
+  home: Home,
+  Car: Car,
+  car: Car,
+  Shield: Shield,
+  shield: Shield,
+  Gift: Gift,
+  gift: Gift,
+  Clock: Clock,
+  clock: Clock,
+  Heart: Heart,
+  heart: Heart,
+  Trash2: Trash2,
+  trash2: Trash2,
+  Bed: Bed,
+  bed: Bed,
+  palette: Palette,
+  Palette: Palette,
+  square: Square,
+  hash: Hash,
+  type: Type,
+  'pen-tool': PenTool,
+  PenTool: PenTool,
+  'book-open': BookOpen,
+  BookOpen: BookOpen,
+  plus: Plus,
+  Plus: Plus,
+  briefcase: Briefcase,
+  Briefcase: Briefcase,
+  book: Book,
+  Book: Book,
+  'piggy-bank': PiggyBank,
+  PiggyBank: PiggyBank,
+  x: X,
+  X: X,
+  utensils: Utensils,
+  Utensils: Utensils,
+  shirt: Shirt,
+  Shirt: Shirt,
+  bike: Bike,
+  Bike: Bike,
+  waves: Waves,
+  Waves: Waves,
+  monitor: Monitor,
+  Monitor: Monitor,
+  mail: Mail,
+  Mail: Mail,
+  calculator: Calculator,
+  Calculator: Calculator,
+  'chef-hat': ChefHat,
+  ChefHat: ChefHat,
+  needle: Syringe,
+  Needle: Syringe,
+  sprout: Sprout,
+  Sprout: Sprout,
+  'heart-pulse': HeartPulse,
+  HeartPulse: HeartPulse,
+  map: Map,
+  Map: Map,
+  mic: Mic,
+  Mic: Mic,
+  code: Code,
+  Code: Code,
+  camera: Camera,
+  Camera: Camera,
+  music: Music,
+  Music: Music,
+  crown: Crown,
+  Crown: Crown,
+  flame: Flame,
+  Flame: Flame,
+};
 
 export function getIcon(iconName: string, size: number = 24): React.ReactElement {
-  const IconComponent = (LucideIcons as any)[iconName];
-  if (IconComponent) {
-    return React.createElement(IconComponent, { size });
-  }
-  // Fallback to a default icon if the requested icon doesn't exist
-  return React.createElement(LucideIcons.Star, { size });
-} 
+  const IconComponent = ICON_MAP[iconName] ?? Star;
+  return React.createElement(IconComponent, { size });
+}

@@ -10,3 +10,8 @@ dev-dist
 .env.production.local
 
 tsconfig.tsbuildinfo
+tsconfig.node.tsbuildinfo
+
+# Compiled config artifacts
+vite.config.js
+vite.config.d.ts
