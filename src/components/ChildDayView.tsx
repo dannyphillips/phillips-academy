@@ -84,7 +84,7 @@ export function ChildDayView({
           options={sortOptions}
           value={sortField}
           direction={sortDirection}
-          onChange={handleSortChange}
+          onSortChange={handleSortChange}
         />
       </div>
 

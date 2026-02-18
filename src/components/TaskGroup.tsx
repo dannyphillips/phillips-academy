@@ -2,21 +2,29 @@ import React from 'react';
 import { Check, Flame, Trophy } from 'lucide-react';
 import { TaskAssignment, TaskDefinition } from '../types/types';
 import { availableIcons } from '../data/taskTemplates';
+import { TaskType, getTaskTypeDisplayName } from '../constants/taskTypes';
 
 interface TaskGroupProps {
-  title: string;
-  tasks: (TaskAssignment & { definition: TaskDefinition })[];
-  selectedDay: number;
-  onTaskComplete: (childId: string, taskId: string, day: number) => void;
-  colors: {
+  // Wrapper mode (ChildWeekView, ParentListView, ParentWeekView)
+  type?: TaskType;
+  className?: string;
+  children?: React.ReactNode;
+  // Full rendering mode (ChildDayView)
+  title?: string;
+  tasks?: (TaskAssignment & { definition: TaskDefinition })[];
+  selectedDay?: number;
+  onTaskComplete?: (childId: string, taskId: string, day: number) => void;
+  colors?: {
     bg: string;
-    text: string;
-    border: string;
+    muted: string;
   };
-  getCompletionDateKey: (dayIndex: number) => string;
+  getCompletionDateKey?: (dayIndex: number) => string;
 }
 
 export function TaskGroup({ 
+  type,
+  className,
+  children,
   title, 
   tasks, 
   selectedDay, 
@@ -24,6 +32,28 @@ export function TaskGroup({
   colors, 
   getCompletionDateKey 
 }: TaskGroupProps) {
+  // Wrapper mode: render a section header + children
+  if (children !== undefined) {
+    const heading = type ? getTaskTypeDisplayName(type) : title;
+    return (
+      <div className={className}>
+        {heading && (
+          <h2 className="text-xl font-semibold text-farmhouse-navy mb-2">
+            {heading}
+          </h2>
+        )}
+        {children}
+      </div>
+    );
+  }
+
+  // Full rendering mode: render task cards internally
+  if (!tasks || selectedDay === undefined || !onTaskComplete || !colors || !getCompletionDateKey) {
+    return null;
+  }
+
+  const heading = title ?? (type ? getTaskTypeDisplayName(type) : '');
+
   // Filter tasks for the selected day
   const tasksForDay = tasks.filter(task => task.days.includes(selectedDay));
 
@@ -32,7 +62,7 @@ export function TaskGroup({
   return (
     <div className="space-y-2">
       <h2 className="text-xl font-semibold text-farmhouse-navy">
-        {title}
+        {heading}
       </h2>
       <div className="space-y-2">
         {tasksForDay.map((assignment) => {
@@ -61,9 +91,6 @@ export function TaskGroup({
                     <h3 className="font-medium text-farmhouse-navy">
                       {assignment.definition.title}
                     </h3>
-                    <p className="text-sm text-farmhouse-brown">
-                      {assignment.definition.description}
-                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 text-farmhouse-brown">
