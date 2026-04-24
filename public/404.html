@@ -7,9 +7,32 @@
       // Single Page Apps for GitHub Pages
       // MIT License
       // https://github.com/rafgraph/spa-github-pages
-      var pathSegmentsToKeep = 1;
+      // 0: custom domain (base /). 1: GitHub project pages (/phillips-academy/...).
+      var firstSeg = window.location.pathname.split('/').filter(Boolean)[0];
+      var pathSegmentsToKeep = firstSeg === 'phillips-academy' ? 1 : 0;
 
       var l = window.location;
+      var prefix = l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+        l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/');
+      var pathToIndex = prefix + (prefix.endsWith('/') ? '' : '/') + 'index.html';
+
+      // Runaway re-encoding: ?/&/~and~… — unrecoverable; load app at base route.
+      if (l.search.length > 3 && l.search[1] === '&' && l.search[2] === '/' && l.search[3] === '~') {
+        l.replace(pathToIndex + l.hash);
+        return;
+      }
+      // Botched one round of 404: ?/&/x… instead of ?/x… — fix before re-encoding.
+      if (l.search.length > 2 && l.search[1] === '&' && l.search[2] === '/') {
+        l.replace(pathToIndex + '?' + l.search.slice(2) + l.hash);
+        return;
+      }
+      // If the URL is already in ?/... SPA form, do not re-run the 404 transform — that would
+      // turn ?/x into ?/&/x and replace & with ~and~ on every pass, corrupting the URL.
+      // Send users to index.html with the same query so static hosts that 404 on ?/... still load the app.
+      if (l.search.length > 1 && l.search[1] === '/') {
+        l.replace(pathToIndex + l.search + l.hash);
+        return;
+      }
       l.replace(
         l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
         l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + '/?/' +
