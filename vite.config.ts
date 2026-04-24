@@ -2,11 +2,16 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
-// GitHub project Pages: /phillips-academy/. For a user/org site at the domain root, set VITE_BASE_PATH=/ in CI.
-const base = process.env.VITE_BASE_PATH ?? '/'
+// Default `base: './'` so the same build works at the domain root and under /phillips-academy/ (GitHub project
+// Pages) — asset URLs are relative to the current URL. Set VITE_BASE_PATH only for a fixed absolute base.
+const base = process.env.VITE_BASE_PATH || './'
 const pwa = (p: string) => {
+  const rel = p.replace(/^\//, '')
+  if (base === './' || !base) {
+    return rel ? `./${rel}` : './'
+  }
   const b = base.endsWith('/') ? base : `${base}/`
-  return b + p.replace(/^\//, '')
+  return b + rel
 }
 
 // https://vitejs.dev/config/
@@ -42,7 +47,7 @@ export default defineConfig({
                 display: "standalone",
                 orientation: "portrait",
                 start_url: pwa(''),
-                scope: base.endsWith('/') ? base : `${base}/`,
+                scope: base === './' || !base ? './' : base.endsWith('/') ? base : `${base}/`,
                 icons: [
                     {
                         src: pwa('assets/logo-circle-crop.png'),
