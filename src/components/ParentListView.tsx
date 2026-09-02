@@ -1,14 +1,13 @@
-import React from 'react';
-import { Edit2, Trash2, CircleDot } from 'lucide-react';
+import React, { useState } from 'react';
+import { Edit2, Trash2 } from 'lucide-react';
 import { Child, TaskDefinition, TaskAssignment } from '../types/types';
-import { getAllUniqueTaskDefinitions, getColorClasses } from '../utils/taskUtils';
+import { getColorClasses } from '../utils/taskUtils';
 import { TASK_TYPES } from '../constants/taskTypes';
 import { ChildToggle } from './ChildToggle';
 import { TaskGroup } from './TaskGroup';
 import { ConfirmModal } from './ConfirmModal';
 import { deleteTaskDefinition } from '../services/database';
 import { availableIcons } from '../data/taskTemplates';
-import { useState } from 'react';
 import { SortSelect } from './SortSelect';
 import { sortTaskDefinitions, TaskSortOption, SortDirection } from '../utils/sortUtils';
 
@@ -46,20 +45,17 @@ export function ParentListView({ children, openTaskEditor, onEditChild, setChild
 
   const handleDeleteTask = async (taskDefinitionId: string) => {
     try {
-      console.log('Deleting task definition:', taskDefinitionId);
       await deleteTaskDefinition(taskDefinitionId);
       
       // Update local state for children
-      setChildren(prev => {
-        const newChildren = prev.map(child => ({
+      setChildren(prev => 
+        prev.map(child => ({
           ...child,
           taskAssignments: child.taskAssignments.filter(
             assignment => assignment.taskDefinitionId !== taskDefinitionId
           )
-        }));
-        console.log('Updated children:', newChildren);
-        return newChildren;
-      });
+        }))
+      );
 
       // Update local state for task definitions
       setTaskDefinitions(prev => 

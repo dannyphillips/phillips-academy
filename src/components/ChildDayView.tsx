@@ -1,27 +1,15 @@
 import React from 'react';
-import { Check, Flame, Trophy } from 'lucide-react';
 import { Child } from '../types/types';
 import { getColorClasses } from '../utils/taskUtils';
-import { TASK_TYPES, getTaskTypeDisplayName, TaskType } from '../constants/taskTypes';
+import { TASK_TYPES, getTaskTypeDisplayName } from '../constants/taskTypes';
 import { TaskGroup } from './TaskGroup';
-import { availableIcons } from '../data/taskTemplates';
 import { SortSelect } from './SortSelect';
 import { sortTaskAssignments, TaskSortOption, SortDirection } from '../utils/sortUtils';
-
-// Helper function to get the completion date key for a given day index
-function getCompletionDateKey(dayIndex: number): string {
-  const today = new Date();
-  const currentWeekStart = new Date(today);
-  currentWeekStart.setDate(today.getDate() - today.getDay()); // Get start of week (Sunday)
-  const completionDate = new Date(currentWeekStart);
-  completionDate.setDate(currentWeekStart.getDate() + dayIndex);
-  return completionDate.toISOString().split('T')[0]; // Format: YYYY-MM-DD
-}
+import { getCompletionDateKey } from '../utils/dateUtils';
 
 interface ChildDayViewProps {
   children: Child[];
   activeChild: number;
-  setActiveChild: (index: number) => void;
   selectedDay: number;
   setSelectedDay: (day: number) => void;
   daysOfWeek: string[];
@@ -31,7 +19,6 @@ interface ChildDayViewProps {
 export function ChildDayView({
   children,
   activeChild,
-  setActiveChild,
   selectedDay,
   setSelectedDay,
   daysOfWeek,

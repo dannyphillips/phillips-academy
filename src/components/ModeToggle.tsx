@@ -1,35 +1,25 @@
-import React from 'react';
-
 interface ModeToggleProps {
   mode: 'tasks' | 'skills';
   onModeChange: (mode: 'tasks' | 'skills') => void;
 }
 
-export const ModeToggle = ({ mode, onModeChange }: ModeToggleProps) => {
+export function ModeToggle({ mode, onModeChange }: ModeToggleProps) {
   return (
-    <div className="flex items-center justify-center mb-6">
-      <div className="bg-gray-100 rounded-lg p-1 flex">
+    <div className="flex items-center justify-center">
+      <div className="nav-container">
         <button
           onClick={() => onModeChange('tasks')}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-            mode === 'tasks'
-              ? 'bg-white text-gray-900 shadow-sm'
-              : 'text-gray-600 hover:text-gray-900'
-          }`}
+          className={`nav-toggle ${mode === 'tasks' ? 'nav-toggle-active' : ''}`}
         >
           Tasks
         </button>
         <button
           onClick={() => onModeChange('skills')}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-            mode === 'skills'
-              ? 'bg-white text-gray-900 shadow-sm'
-              : 'text-gray-600 hover:text-gray-900'
-          }`}
+          className={`nav-toggle ${mode === 'skills' ? 'nav-toggle-active' : ''}`}
         >
           Skills
         </button>
       </div>
     </div>
   );
-}; 
+}

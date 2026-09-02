@@ -102,6 +102,30 @@ body {
   .day-button-inactive {
     @apply bg-white text-farmhouse-brown border border-farmhouse-beige hover:border-farmhouse-navy;
   }
+
+  .danger-button {
+    @apply px-4 py-2 rounded-lg bg-farmhouse-rust text-white flex items-center gap-2 text-sm font-medium hover:bg-farmhouse-rust/90 transition-all;
+  }
+
+  .skill-card {
+    @apply bg-white rounded-lg border border-farmhouse-beige p-4 hover:shadow-md transition-all;
+  }
+
+  .skill-card-active {
+    @apply bg-farmhouse-linen/50 border-farmhouse-sage/40;
+  }
+
+  .skill-card-completed {
+    @apply bg-farmhouse-sage/10 border-farmhouse-sage/30;
+  }
+
+  .skill-progress-bar {
+    @apply w-full bg-farmhouse-beige rounded-full h-1.5;
+  }
+
+  .skill-progress-fill {
+    @apply bg-farmhouse-teal h-1.5 rounded-full transition-all duration-300;
+  }
 }
 
 /* Prevent text size adjustment on orientation change */

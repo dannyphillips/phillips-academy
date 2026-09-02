@@ -12,15 +12,13 @@ import { sortTaskDefinitions, TaskSortOption, SortDirection } from '../utils/sor
 
 interface ParentWeekViewProps {
   children: Child[];
-  setChildren: React.Dispatch<React.SetStateAction<Child[]>>;
   daysOfWeek: string[];
   currentDay: number;
   openTaskEditor: (taskDefinition?: TaskDefinition, taskAssignment?: TaskAssignment) => void;
   onEditChild: (child: Child) => void;
-  taskDefinitions: TaskDefinition[];
 }
 
-export function ParentWeekView({ children, setChildren, daysOfWeek, currentDay, openTaskEditor, onEditChild, taskDefinitions }: ParentWeekViewProps) {
+export function ParentWeekView({ children, daysOfWeek, currentDay, openTaskEditor, onEditChild }: ParentWeekViewProps) {
   const uniqueTaskDefinitions = getAllUniqueTaskDefinitions(children);
   const [visibleChildren, setVisibleChildren] = useState<string[]>(
     children.map((child) => child.id)

@@ -3,7 +3,6 @@ import {
   collection, 
   doc, 
   getDocs, 
-  setDoc, 
   updateDoc,
   query,
   where,
@@ -18,17 +17,58 @@ import {
   FirestoreChild, 
   TaskDefinition,
   TaskAssignment,
-  FirestoreTaskDefinition,
   FirestoreTaskAssignment,
   ChildSkill
 } from '../types/types';
 import { taskTemplates } from '../data/taskTemplates';
+import { getCompletionDateKey } from '../utils/dateUtils';
 
 // Collections
 const CHILDREN_COLLECTION = 'children';
 const TASK_DEFINITIONS_COLLECTION = 'taskDefinitions';
 const TASK_ASSIGNMENTS_COLLECTION = 'taskAssignments';
 const CHILD_SKILLS_COLLECTION = 'childSkills';
+
+function mapFirestoreChildSkill(docId: string, data: Record<string, unknown>): ChildSkill {
+  const startedAt = (data.startedAt as { toDate: () => Date }).toDate();
+  const completedAt = data.completedAt
+    ? (data.completedAt as { toDate: () => Date }).toDate()
+    : undefined;
+
+  return {
+    id: docId,
+    childId: data.childId as string,
+    skillId: data.skillId as string,
+    isCompleted: data.isCompleted as boolean,
+    startedAt,
+    completedAt,
+    notes: data.notes as string | undefined,
+    progressType: (data.progressType as 'boolean' | 'counter') || 'boolean',
+    targetValue: data.targetValue as number | undefined,
+    currentValue: (data.currentValue as number) || 0,
+    progressHistory: (data.progressHistory as Array<Record<string, unknown>> | undefined)?.map((entry) => ({
+      date: (entry.date as { toDate: () => Date }).toDate(),
+      value: entry.value as number,
+      notes: entry.notes as string | undefined,
+    })) || [],
+  };
+}
+
+async function getChildSkillDoc(childId: string, skillId: string) {
+  const skillsSnapshot = await getDocs(
+    query(
+      collection(db, CHILD_SKILLS_COLLECTION),
+      where('childId', '==', childId),
+      where('skillId', '==', skillId)
+    )
+  );
+
+  if (skillsSnapshot.empty) {
+    throw new Error(`Skill document not found for child ${childId}, skill ${skillId}`);
+  }
+
+  return skillsSnapshot.docs[0];
+}
 
 // Request deduplication
 const pendingRequests = new Map<string, Promise<any>>();
@@ -365,12 +405,7 @@ export const updateTaskCompletion = async (
     const assignment = assignmentDoc.data() as FirestoreTaskAssignment;
     
     // Calculate the date for this completion
-    const today = new Date();
-    const currentWeekStart = new Date(today);
-    currentWeekStart.setDate(today.getDate() - today.getDay()); // Get start of week (Sunday)
-    const completionDate = new Date(currentWeekStart);
-    completionDate.setDate(currentWeekStart.getDate() + dayIndex);
-    const completionKey = completionDate.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+    const completionKey = getCompletionDateKey(dayIndex);
 
     // Update both documents in parallel
     await Promise.all([
@@ -442,6 +477,14 @@ export async function deleteChild(childId: string): Promise<void> {
       batch.delete(doc.ref);
     });
     
+    const skillsSnapshot = await getDocs(
+      query(collection(db, CHILD_SKILLS_COLLECTION), where('childId', '==', childId))
+    );
+    
+    skillsSnapshot.docs.forEach(skillDoc => {
+      batch.delete(skillDoc.ref);
+    });
+    
     // Delete the child
     batch.delete(doc(db, CHILDREN_COLLECTION, childId));
     
@@ -483,25 +526,9 @@ export async function getAllChildSkills(): Promise<ChildSkill[]> {
     try {
       const querySnapshot = await getDocs(collection(db, CHILD_SKILLS_COLLECTION));
       
-      return querySnapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          childId: data.childId,
-          skillId: data.skillId,
-          isCompleted: data.isCompleted,
-          startedAt: data.startedAt.toDate(),
-          completedAt: data.completedAt?.toDate(),
-          notes: data.notes,
-          progressType: data.progressType || 'boolean',
-          targetValue: data.targetValue,
-          currentValue: data.currentValue || 0,
-          progressHistory: data.progressHistory?.map((entry: any) => ({
-            date: entry.date.toDate(),
-            value: entry.value,
-            notes: entry.notes
-          })) || []
-        } as ChildSkill;
-      });
+      return querySnapshot.docs.map(docSnapshot =>
+        mapFirestoreChildSkill(docSnapshot.id, docSnapshot.data() as Record<string, unknown>)
+      );
     } catch (error) {
       console.error('Error getting all child skills:', error);
       throw error;
@@ -517,25 +544,9 @@ export async function getChildSkills(childId: string): Promise<ChildSkill[]> {
         query(collection(db, CHILD_SKILLS_COLLECTION), where('childId', '==', childId))
       );
       
-      return querySnapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          childId: data.childId,
-          skillId: data.skillId,
-          isCompleted: data.isCompleted,
-          startedAt: data.startedAt.toDate(),
-          completedAt: data.completedAt?.toDate(),
-          notes: data.notes,
-          progressType: data.progressType || 'boolean',
-          targetValue: data.targetValue,
-          currentValue: data.currentValue || 0,
-          progressHistory: data.progressHistory?.map((entry: any) => ({
-            date: entry.date.toDate(),
-            value: entry.value,
-            notes: entry.notes
-          })) || []
-        } as ChildSkill;
-      });
+      return querySnapshot.docs.map(docSnapshot =>
+        mapFirestoreChildSkill(docSnapshot.id, docSnapshot.data() as Record<string, unknown>)
+      );
     } catch (error) {
       console.error('Error getting child skills:', error);
       throw error;
@@ -565,16 +576,16 @@ export async function addChildSkill(
     const docRef = await addDoc(collection(db, CHILD_SKILLS_COLLECTION), firestoreData);
     
     return {
+      id: docRef.id,
       ...childSkill,
       startedAt: new Date(),
       isCompleted: false,
       currentValue: childSkill.currentValue || 0,
-      progressHistory: childSkill.progressHistory || []
+      progressHistory: childSkill.progressHistory || [],
     };
   } catch (error) {
     console.error('Error adding child skill:', error);
     
-    // Check if it's a permission error
     if (error instanceof Error && error.message.includes('permission')) {
       console.error('Permission denied. This might be due to Firestore rules not being deployed.');
       throw new Error('Permission denied. Please ensure Firestore rules are properly configured.');
@@ -586,31 +597,19 @@ export async function addChildSkill(
 
 // Update a child skill
 export async function updateChildSkill(
+  childId: string,
   skillId: string,
   updates: Partial<Omit<ChildSkill, 'id' | 'childId' | 'skillId'>>
 ): Promise<void> {
   try {
-    // First, find the document by skillId and childId
-    const skillsSnapshot = await getDocs(
-      query(
-        collection(db, CHILD_SKILLS_COLLECTION), 
-        where('skillId', '==', skillId)
-      )
-    );
-    
-    if (skillsSnapshot.empty) {
-      throw new Error(`Skill document not found for skillId: ${skillId}`);
-    }
-    
-    // Get the first matching document (should be unique per child-skill combination)
-    const skillDoc = skillsSnapshot.docs[0];
+    const skillDoc = await getChildSkillDoc(childId, skillId);
     
     const validUpdates = Object.entries(updates).reduce((acc, [key, value]) => {
       if (value !== undefined) {
         acc[key] = value;
       }
       return acc;
-    }, {} as Record<string, any>);
+    }, {} as Record<string, unknown>);
 
     await updateDoc(skillDoc.ref, validUpdates);
   } catch (error) {
@@ -619,18 +618,26 @@ export async function updateChildSkill(
   }
 }
 
-// Toggle skill completion (for boolean skills)
+// Toggle skill completion
 export async function toggleSkillCompletion(
+  childId: string,
   skillId: string,
   isCompleted: boolean
 ): Promise<void> {
   try {
-    const updates: Partial<ChildSkill> = {
+    const skillDoc = await getChildSkillDoc(childId, skillId);
+    const skillData = skillDoc.data();
+
+    const updates: Record<string, unknown> = {
       isCompleted,
-      completedAt: isCompleted ? new Date() : undefined
+      completedAt: isCompleted ? new Date() : null,
     };
-    
-    await updateChildSkill(skillId, updates);
+
+    if (isCompleted && skillData.progressType === 'counter' && skillData.targetValue) {
+      updates.currentValue = skillData.targetValue;
+    }
+
+    await updateDoc(skillDoc.ref, updates);
   } catch (error) {
     console.error('Error toggling skill completion:', error);
     throw error;
@@ -639,49 +646,32 @@ export async function toggleSkillCompletion(
 
 // Update skill progress (for counter skills)
 export async function updateSkillProgress(
+  childId: string,
   skillId: string,
   newValue: number,
   notes?: string
 ): Promise<void> {
   try {
-    // Find the skill document by skillId
-    const skillsSnapshot = await getDocs(
-      query(
-        collection(db, CHILD_SKILLS_COLLECTION), 
-        where('skillId', '==', skillId)
-      )
-    );
-    
-    if (skillsSnapshot.empty) {
-      throw new Error(`Skill document not found for skillId: ${skillId}`);
-    }
-    
-    const skillDoc = skillsSnapshot.docs[0];
+    const skillDoc = await getChildSkillDoc(childId, skillId);
     const skillData = skillDoc.data();
-    const currentValue = skillData.currentValue || 0;
     const targetValue = skillData.targetValue;
     const progressHistory = skillData.progressHistory || [];
     
-    // Add new progress entry
     const newEntry = {
       date: new Date(),
       value: newValue,
-      notes
+      notes,
     };
     
     const updatedHistory = [...progressHistory, newEntry];
-    
-    // Check if skill is completed
     const isCompleted = targetValue ? newValue >= targetValue : false;
     
-    const updates: Partial<ChildSkill> = {
+    await updateDoc(skillDoc.ref, {
       currentValue: newValue,
       progressHistory: updatedHistory,
       isCompleted,
-      completedAt: isCompleted ? new Date() : skillData.completedAt
-    };
-    
-    await updateDoc(skillDoc.ref, updates);
+      completedAt: isCompleted ? new Date() : skillData.completedAt ?? null,
+    });
   } catch (error) {
     console.error('Error updating skill progress:', error);
     throw error;
@@ -690,50 +680,34 @@ export async function updateSkillProgress(
 
 // Increment skill progress (for counter skills)
 export async function incrementSkillProgress(
+  childId: string,
   skillId: string,
-  increment: number = 1,
+  incrementAmount: number = 1,
   notes?: string
 ): Promise<void> {
   try {
-    // Find the skill document by skillId
-    const skillsSnapshot = await getDocs(
-      query(
-        collection(db, CHILD_SKILLS_COLLECTION), 
-        where('skillId', '==', skillId)
-      )
-    );
-    
-    if (skillsSnapshot.empty) {
-      throw new Error(`Skill document not found for skillId: ${skillId}`);
-    }
-    
-    const skillDoc = skillsSnapshot.docs[0];
+    const skillDoc = await getChildSkillDoc(childId, skillId);
     const skillData = skillDoc.data();
     const currentValue = skillData.currentValue || 0;
-    const newValue = currentValue + increment;
+    const newValue = currentValue + incrementAmount;
+    const targetValue = skillData.targetValue;
+    const progressHistory = skillData.progressHistory || [];
     
-    // Add new progress entry
     const newEntry = {
       date: new Date(),
       value: newValue,
-      notes
+      notes,
     };
     
-    const progressHistory = skillData.progressHistory || [];
     const updatedHistory = [...progressHistory, newEntry];
-    
-    // Check if skill is completed
-    const targetValue = skillData.targetValue;
     const isCompleted = targetValue ? newValue >= targetValue : false;
     
-    const updates: Partial<ChildSkill> = {
+    await updateDoc(skillDoc.ref, {
       currentValue: newValue,
       progressHistory: updatedHistory,
       isCompleted,
-      completedAt: isCompleted ? new Date() : skillData.completedAt
-    };
-    
-    await updateDoc(skillDoc.ref, updates);
+      completedAt: isCompleted ? new Date() : skillData.completedAt ?? null,
+    });
   } catch (error) {
     console.error('Error incrementing skill progress:', error);
     throw error;
@@ -741,22 +715,9 @@ export async function incrementSkillProgress(
 }
 
 // Delete a child skill
-export async function deleteChildSkill(skillId: string): Promise<void> {
+export async function deleteChildSkill(childId: string, skillId: string): Promise<void> {
   try {
-    // Find the skill document by skillId
-    const skillsSnapshot = await getDocs(
-      query(
-        collection(db, CHILD_SKILLS_COLLECTION), 
-        where('skillId', '==', skillId)
-      )
-    );
-    
-    if (skillsSnapshot.empty) {
-      throw new Error(`Skill document not found for skillId: ${skillId}`);
-    }
-    
-    // Get the first matching document and delete it
-    const skillDoc = skillsSnapshot.docs[0];
+    const skillDoc = await getChildSkillDoc(childId, skillId);
     await deleteDoc(skillDoc.ref);
   } catch (error) {
     console.error('Error deleting child skill:', error);
@@ -773,8 +734,8 @@ export async function deleteChildSkills(childId: string): Promise<void> {
       query(collection(db, CHILD_SKILLS_COLLECTION), where('childId', '==', childId))
     );
     
-    skillsSnapshot.docs.forEach(doc => {
-      batch.delete(doc.ref);
+    skillsSnapshot.docs.forEach(skillDoc => {
+      batch.delete(skillDoc.ref);
     });
     
     await batch.commit();
@@ -782,16 +743,4 @@ export async function deleteChildSkills(childId: string): Promise<void> {
     console.error('Error deleting child skills:', error);
     throw error;
   }
-} 
-
-// Test function to check collection access
-export async function testChildSkillsAccess(): Promise<boolean> {
-  try {
-    const querySnapshot = await getDocs(collection(db, CHILD_SKILLS_COLLECTION));
-    console.log('Successfully accessed childSkills collection');
-    return true;
-  } catch (error) {
-    console.error('Error accessing childSkills collection:', error);
-    return false;
-  }
-} 
+}
