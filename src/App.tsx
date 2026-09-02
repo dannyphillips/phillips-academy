@@ -9,8 +9,9 @@ const ChildDayView = lazy(() => import("./components/ChildDayView").then(m => ({
 const ChildWeekView = lazy(() => import("./components/ChildWeekView").then(m => ({ default: m.ChildWeekView })));
 const ParentView = lazy(() => import("./components/ParentView").then(m => ({ default: m.ParentView })));
 const SkillsView = lazy(() => import("./components/SkillsView").then(m => ({ default: m.SkillsView })));
-import { logout, isParentUser } from "./components/Auth";
+import { logout, isParentUser } from "./services/auth";
 import { useNavigate } from "react-router-dom";
+import { getCompletionDateKey } from "./utils/dateUtils";
 import { 
   getChildrenWithTasks, 
   updateTaskCompletion,
@@ -49,6 +50,12 @@ export function App() {
   }, [allChildSkills, selectedChild]);
 
   useEffect(() => {
+    if (activeChild >= children.length && children.length > 0) {
+      setActiveChild(children.length - 1);
+    }
+  }, [children.length, activeChild]);
+
+  useEffect(() => {
     const loadData = async () => {
       try {
         // Load children and skills in parallel
@@ -76,12 +83,7 @@ export function App() {
     if (!child || !assignment) return;
 
     // Calculate the date for this completion
-    const today = new Date();
-    const currentWeekStart = new Date(today);
-    currentWeekStart.setDate(today.getDate() - today.getDay()); // Get start of week (Sunday)
-    const completionDate = new Date(currentWeekStart);
-    completionDate.setDate(currentWeekStart.getDate() + dayIndex);
-    const completionKey = completionDate.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+    const completionKey = getCompletionDateKey(dayIndex);
 
     // Get the current completion state for this specific day
     const isCurrentlyCompleted = assignment.completions?.[completionKey] || false;
@@ -136,32 +138,32 @@ export function App() {
   }, [navigate]);
 
   const handleSkillToggle = useCallback(async (skillId: string, isCompleted: boolean) => {
+    if (!selectedChild) return;
+
+    const childId = selectedChild.id;
+    const skillDefinition = getSkillById(skillId);
+    const targetValue = skillDefinition?.targetValue;
+
     try {
-      await toggleSkillCompletion(skillId, isCompleted);
+      await toggleSkillCompletion(childId, skillId, isCompleted);
       
-      // Update local state
       setAllChildSkills(prev => 
         prev.map(skill => 
-          skill.skillId === skillId 
-            ? { ...skill, isCompleted, completedAt: isCompleted ? new Date() : undefined }
+          skill.childId === childId && skill.skillId === skillId
+            ? { 
+                ...skill, 
+                isCompleted, 
+                completedAt: isCompleted ? new Date() : undefined,
+                currentValue: isCompleted && targetValue ? targetValue : skill.currentValue,
+              }
             : skill
         )
       );
     } catch (error) {
       console.error('Error toggling skill completion:', error);
-      
-      // Fallback: Update locally
-      setAllChildSkills(prev => 
-        prev.map(skill => 
-          skill.skillId === skillId 
-            ? { ...skill, isCompleted, completedAt: isCompleted ? new Date() : undefined }
-            : skill
-        )
-      );
-      
-      alert('Note: Skill updated locally due to connection issues. Changes may not be saved permanently.');
+      alert('Error updating skill. Please check your connection and try again.');
     }
-  }, []);
+  }, [selectedChild]);
 
   const handleSkillAdd = useCallback(async (skillId: string) => {
     if (!selectedChild) return;
@@ -193,6 +195,7 @@ export function App() {
         
         // Fallback: Create skill locally
         const localSkill: ChildSkill = {
+          id: `${selectedChild.id}_${skillId}`,
           ...skillData,
           startedAt: new Date(),
           isCompleted: false,
@@ -212,13 +215,16 @@ export function App() {
   }, [selectedChild]);
 
   const handleUpdateSkillProgress = useCallback(async (skillId: string, newValue: number, notes?: string) => {
+    if (!selectedChild) return;
+
+    const childId = selectedChild.id;
+
     try {
-      await updateSkillProgress(skillId, newValue, notes);
+      await updateSkillProgress(childId, skillId, newValue, notes);
       
-      // Update local state
       setAllChildSkills(prev => 
         prev.map(skill => 
-          skill.skillId === skillId 
+          skill.childId === childId && skill.skillId === skillId
             ? { 
                 ...skill, 
                 currentValue: newValue,
@@ -234,27 +240,12 @@ export function App() {
       );
     } catch (error) {
       console.error('Error updating skill progress:', error);
-      
-      // Fallback: Update locally
-      setAllChildSkills(prev => 
-        prev.map(skill => 
-          skill.skillId === skillId 
-            ? { 
-                ...skill, 
-                currentValue: newValue,
-                isCompleted: skill.targetValue ? newValue >= skill.targetValue : skill.isCompleted,
-                completedAt: skill.targetValue && newValue >= skill.targetValue ? new Date() : skill.completedAt,
-                progressHistory: [
-                  ...(skill.progressHistory || []),
-                  { date: new Date(), value: newValue, notes }
-                ]
-              }
-            : skill
-        )
-      );
-      
-      alert('Note: Progress updated locally due to connection issues. Changes may not be saved permanently.');
+      alert('Error updating progress. Please check your connection and try again.');
     }
+  }, [selectedChild]);
+
+  const handleChildDeleted = useCallback((childId: string) => {
+    setAllChildSkills(prev => prev.filter(skill => skill.childId !== childId));
   }, []);
 
   const handleChildChange = useCallback(async (childIndex: number) => {
@@ -289,17 +280,17 @@ export function App() {
             <button
               onClick={handleLockClick}
               className={`nav-toggle !px-3 flex items-center gap-2 ${isParentUser() ? 'nav-toggle-active' : ''}`}
-              title={isParentUser() ? "Parent Mode (Click to Logout)" : "Kid Mode (Click to Logout)"}
+              title={isParentUser() ? "Parent Mode (Click to Logout)" : "Child Mode (Click to Logout)"}
             >
               {isParentUser() ? (
                 <>
                   <LockOpen className="w-5 h-5" />
-                  <span>Go to Child Mode</span>
+                  <span>Logout (Parent)</span>
                 </>
               ) : (
                 <>
                   <Lock className="w-5 h-5" />
-                  <span>Go to Parent Mode</span>
+                  <span>Logout</span>
                 </>
               )}
             </button>
@@ -365,6 +356,7 @@ export function App() {
                   daysOfWeek={daysOfWeek}
                   currentDay={currentDay}
                   view={view}
+                  onChildDeleted={handleChildDeleted}
                 />
               ) : (
                 <SkillsView
@@ -381,7 +373,6 @@ export function App() {
                   <ChildDayView
                     children={children}
                     activeChild={activeChild}
-                    setActiveChild={handleChildChange}
                     selectedDay={selectedDay}
                     setSelectedDay={setSelectedDay}
                     daysOfWeek={daysOfWeek}

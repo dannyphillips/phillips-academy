@@ -1,6 +1,6 @@
 import { useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { signInWithCode } from '../components/Auth.ts';
+import { signInWithCode } from '../services/auth';
 import { X } from 'lucide-react';
 
 const Login = () => {
@@ -19,7 +19,7 @@ const Login = () => {
     try {
       await signInWithCode(code);
       navigate('/');
-    } catch (err) {
+    } catch {
       setError('Invalid code. Please try again.');
     }
   };

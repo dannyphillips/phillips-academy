@@ -5,10 +5,13 @@ import { Skill } from '../data/skills';
  * Calculate the progress percentage for a skill
  */
 export function calculateProgressPercentage(childSkill: ChildSkill, skill: Skill): number {
-  if (skill.progressType === 'counter' && skill.targetValue) {
-    return Math.min((childSkill.currentValue || 0) / skill.targetValue * 100, 100);
+  if (childSkill.isCompleted) {
+    return 100;
   }
-  return childSkill.isCompleted ? 100 : 0;
+  if (skill.progressType === 'counter' && skill.targetValue) {
+    return Math.min(((childSkill.currentValue || 0) / skill.targetValue) * 100, 100);
+  }
+  return 0;
 }
 
 /**
@@ -26,9 +29,9 @@ export function isSkillCompleted(childSkill: ChildSkill, skill: Skill): boolean 
  */
 export function getProgressDisplayText(childSkill: ChildSkill, skill: Skill): string {
   if (skill.progressType === 'counter' && skill.targetValue) {
-    const current = childSkill.currentValue || 0;
     const target = skill.targetValue;
     const description = skill.progressDescription || 'items';
+    const current = childSkill.isCompleted ? target : (childSkill.currentValue || 0);
     return `${current} / ${target} ${description}`;
   }
   return childSkill.isCompleted ? 'Completed' : 'In Progress';

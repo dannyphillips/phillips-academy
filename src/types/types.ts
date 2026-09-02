@@ -70,6 +70,7 @@ export interface UniqueTaskDefinition {
 } 
 
 export interface ChildSkill {
+  id?: string;
   childId: string;
   skillId: string;
   isCompleted: boolean;

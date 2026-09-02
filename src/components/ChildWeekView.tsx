@@ -1,5 +1,4 @@
-import React from 'react';
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Check } from 'lucide-react';
 import { Child } from '../types/types';
 import { getColorClasses } from '../utils/taskUtils';
@@ -9,16 +8,7 @@ import { TaskGroup } from './TaskGroup';
 import { availableIcons } from '../data/taskTemplates';
 import { SortSelect } from './SortSelect';
 import { sortTaskAssignments, TaskSortOption, SortDirection } from '../utils/sortUtils';
-
-// Helper function to get the completion date key for a given day index
-function getCompletionDateKey(dayIndex: number): string {
-  const today = new Date();
-  const currentWeekStart = new Date(today);
-  currentWeekStart.setDate(today.getDate() - today.getDay()); // Get start of week (Sunday)
-  const completionDate = new Date(currentWeekStart);
-  completionDate.setDate(currentWeekStart.getDate() + dayIndex);
-  return completionDate.toISOString().split('T')[0]; // Format: YYYY-MM-DD
-}
+import { getCompletionDateKey } from '../utils/dateUtils';
 
 interface ChildWeekViewProps {
   children: Child[];
@@ -31,6 +21,15 @@ export function ChildWeekView({ children, handleTaskComplete, daysOfWeek, curren
   const [visibleChildren, setVisibleChildren] = useState<string[]>(
     children.map((child) => child.id)
   );
+
+  useEffect(() => {
+    setVisibleChildren(prev => {
+      const childIds = children.map(child => child.id);
+      const validVisible = prev.filter(id => childIds.includes(id));
+      const newChildren = childIds.filter(id => !prev.includes(id));
+      return [...validVisible, ...newChildren];
+    });
+  }, [children]);
 
   // Sort state
   const [sortField, setSortField] = useState<TaskSortOption>('name');

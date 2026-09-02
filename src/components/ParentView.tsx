@@ -9,7 +9,6 @@ import {
   addTaskAssignment, 
   updateTaskDefinition,
   updateTaskAssignment,
-  deleteTaskDefinition,
   deleteTaskAssignment,
   getTaskDefinitions,
   addChild,
@@ -26,9 +25,10 @@ interface ParentViewProps {
   daysOfWeek: string[];
   currentDay: number;
   view: 'day' | 'week';
+  onChildDeleted?: (childId: string) => void;
 }
 
-export function ParentView({ children, setChildren, daysOfWeek, currentDay, view }: ParentViewProps) {
+export function ParentView({ children, setChildren, daysOfWeek, currentDay, view, onChildDeleted }: ParentViewProps) {
   const [taskEditor, setTaskEditor] = useState<TaskEditor>({
     isOpen: false,
     isNew: true
@@ -361,6 +361,7 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
     try {
       await deleteChild(childId);
       setChildren(prev => prev.filter(child => child.id !== childId));
+      onChildDeleted?.(childId);
       setIsChildModalOpen(false);
       setEditingChild(null);
     } catch (error) {
@@ -563,7 +564,7 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
                           className={`flex items-center gap-2 px-3 py-1 rounded-full border-2 transition-colors ${
                             selectedChildren.includes(child.id)
                               ? `${colors.bg} text-white border-transparent`
-                              : `border-farmhouse-beige text-farmhouse-brown hover:${colors.bg} hover:text-white hover:border-transparent`
+                              : 'border-farmhouse-beige text-farmhouse-brown hover:bg-farmhouse-cream'
                           }`}
                         >
                           {child.name}

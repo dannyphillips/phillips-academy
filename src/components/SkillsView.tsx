@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Filter, Trophy, Target, CheckCircle, Circle, TrendingUp } from 'lucide-react';
+import { Search, Trophy, Target, CheckCircle, Circle, TrendingUp } from 'lucide-react';
 import { Child } from '../types/types';
 import { Skill, SkillCategory, SKILL_CATEGORIES, getSkillsForAge, DIFFICULTY_COLORS } from '../data/skills';
-import { ChildSkill, SkillProgress } from '../types/types';
+import { ChildSkill } from '../types/types';
 import { getIcon } from '../utils/iconUtils';
 import { SortSelect } from './SortSelect';
 import { sortSkills, SkillSortOption, SortDirection } from '../utils/sortUtils';
@@ -46,10 +46,8 @@ export const SkillsView = ({
 
   // Memoize expensive calculations
   const {
-    availableSkills,
     skillProgressMap,
     currentSkills,
-    completedSkills,
     availableSkillsToAdd,
     filteredCompletedSkills
   } = useMemo(() => {
@@ -103,10 +101,8 @@ export const SkillsView = ({
     );
 
     return {
-      availableSkills,
       skillProgressMap,
       currentSkills,
-      completedSkills,
       availableSkillsToAdd,
       filteredCompletedSkills
     };
