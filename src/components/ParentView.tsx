@@ -394,12 +394,10 @@ export function ParentView({ children, setChildren, daysOfWeek, currentDay, view
         {view === 'week' ? (
           <ParentWeekView
             children={children}
-            setChildren={setChildren}
             daysOfWeek={daysOfWeek}
             currentDay={currentDay}
             openTaskEditor={openTaskEditor}
             onEditChild={openChildModal}
-            taskDefinitions={taskDefinitions}
           />
         ) : (
           <ParentListView
