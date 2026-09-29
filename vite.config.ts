@@ -40,7 +40,7 @@ export default defineConfig({
             includeAssets: ['assets/logo-circle-crop.png'],
             manifest: {
                 name: "Phillips Homeschool Academy",
-                short_name: "PHA Tasks",
+                short_name: "Phillips Academy",
                 description: "A task management app for homeschool children",
                 theme_color: "#1E3A8A",
                 background_color: "#F5F1EA",
