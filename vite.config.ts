@@ -37,7 +37,14 @@ export default defineConfig({
         react(),
         VitePWA({
             registerType: 'autoUpdate',
-            includeAssets: ['assets/logo-circle-crop.png'],
+            includeAssets: [
+                'assets/favicon.png',
+                'assets/apple-touch-icon.png',
+                'assets/icon-192.png',
+                'assets/icon-512.png',
+                'assets/icon-maskable-512.png',
+                'assets/logo-circle-crop.png',
+            ],
             manifest: {
                 name: "Phillips Homeschool Academy",
                 short_name: "Phillips Academy",
@@ -50,16 +57,22 @@ export default defineConfig({
                 scope: base === './' || !base ? './' : base.endsWith('/') ? base : `${base}/`,
                 icons: [
                     {
-                        src: pwa('assets/logo-circle-crop.png'),
+                        src: pwa('assets/icon-192.png'),
                         sizes: "192x192",
                         type: "image/png",
-                        purpose: "maskable"
+                        purpose: "any"
                     },
                     {
-                        src: pwa('assets/logo-circle-crop.png'),
+                        src: pwa('assets/icon-512.png'),
                         sizes: "512x512",
                         type: "image/png",
                         purpose: "any"
+                    },
+                    {
+                        src: pwa('assets/icon-maskable-512.png'),
+                        sizes: "512x512",
+                        type: "image/png",
+                        purpose: "maskable"
                     },
                     {
                         src: pwa('assets/apple-touch-icon.png'),
